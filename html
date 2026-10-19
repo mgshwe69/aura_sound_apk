@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUIII_MUSIC — Cinematic 3D Audio Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<!-- Three.js Library for 3D Background -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #07060a;
+  --panel: rgba(22, 18, 28, 0.75);
+  --text: #efe7da;
+  --muted: rgba(239, 231, 218, 0.55);
+  --gold: #00e5ff;
+  --accent-glow: rgba(0, 229, 255, 0.4);
+  --glass: blur(25px) saturate(190%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+  --card-radius: 20px;
+}
+
+* { box-sizing: border-box; user-select: none; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: "Zen Kaku Gothic New", sans-serif;
+  overflow-x: hidden; height: 100vh;
+}
+
+/* 3D CANVAS BACKGROUND */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+}
+
+/* CINEMATIC FILM GRAIN */
+body::after {
+  content:""; position:fixed; inset:-50%; z-index:999; pointer-events:none; opacity:.06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain .5s steps(4) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0,0) }
+  25% { transform: translate(-3%, 2%) }
+  50% { transform: translate(2%, -3%) }
+  75% { transform: translate(-2%, -1%) }
+  100% { transform: translate(1%, 3%) }
+}
+
+header {
+  padding: 20px; display: flex; justify-content: space-between; align-items: center;
+  background: rgba(7,6,10,0.6); backdrop-filter: var(--glass); border-bottom: var(--glass-border);
+}
+.brand { font-size: 1.2rem; font-weight: 900; letter-spacing: 1px; color: var(--gold); text-shadow: 0 0 10px var(--accent-glow); }
+
+.main-container { max-width: 800px; margin: auto; padding: 20px; padding-bottom: 120px; }
+h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 15px; }
+
+.playlist { display: flex; flex-direction: column; gap: 12px; }
+.track-card {
+  display: flex; align-items: center; gap: 15px; padding: 10px 14px;
+  background: var(--panel); backdrop-filter: var(--glass); border: var(--glass-border);
+  border-radius: var(--card-radius); cursor: pointer; transition: 0.3s;
+}
+.track-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); }
+.track-card img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; }
+.track-info { flex: 1; }
+.track-title { font-weight: 800; font-size: 0.95rem; }
+.track-artist { font-size: 0.8rem; color: var(--muted); }
+
+/* MINI PLAYER */
+.mini-player {
+  position: fixed; bottom: 15px; left: 15px; right: 15px; max-width: 770px; margin: auto;
+  background: rgba(22, 18, 28, 0.85); backdrop-filter: var(--glass); border: var(--glass-border);
+  border-radius: 24px; padding: 12px 20px; display: flex; align-items: center; gap: 15px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 100; cursor: pointer;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.6s ease, height 0.6s ease;
+}
+.mini-player img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; transition: 0.3s; }
+.mini-player img.holding { transform: scale(1.1); filter: drop-shadow(0 0 15px var(--gold)); }
+
+/* FULL SCREEN PLAYER EXPANSION OVERLAY */
+.full-player {
+  position: fixed; inset: 0; background: rgba(7, 6, 10, 0.95); backdrop-filter: blur(40px);
+  z-index: 1000; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 40px 30px; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(100%);
+}
+.full-player.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+.full-header { display: flex; justify-content: space-between; align-items: center; }
+.close-full { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+
+.full-art-container { display: grid; place-items: center; margin: auto 0; }
+.full-art {
+  width: 260px; height: 260px; border-radius: 30px; object-fit: cover;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8); border: var(--glass-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.full-art.holding { transform: scale(1.08); box-shadow: 0 0 40px var(--gold); }
+
+.lyrics-box { text-align: center; color: var(--muted); font-size: 0.9rem; min-height: 30px; margin: 15px 0; }
+.controls-area { display: flex; flex-direction: column; gap: 15px; }
+
+.progress-slider { width: 100%; accent-color: var(--gold); cursor: pointer; }
+.playback-buttons { display: flex; justify-content: center; align-items: center; gap: 25px; }
+.control-btn { background: none; border: none; color: var(--text); font-size: 1.3rem; cursor: pointer; transition: 0.2s; }
+.control-btn.active { color: var(--gold); text-shadow: 0 0 10px var(--accent-glow); }
+.control-btn.play-pause-big {
+  width: 60px; height: 60px; border-radius: 50%; background: var(--gold); color: var(--bg);
+  display: grid; place-items: center; font-size: 1.5rem; font-weight: 900;
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header>
+  <div class="brand">◉ SUIII_MUSIC</div>
+</header>
+
+<div class="main-container">
+  <h2>Immersive Playlist</h2>
+  <div class="playlist" id="playlist"></div>
+</div>
+
+<!-- MINI PLAYER -->
+<div class="mini-player" id="miniPlayer">
+  <img id="miniImg" src="" alt="Art">
+  <div class="track-info">
+    <div class="track-title" id="miniTitle">Select a track</div>
+    <div class="track-artist" id="miniArtist">Original Artist</div>
+  </div>
+  <button class="control-btn" id="miniPlayBtn">▶</button>
+</div>
+
+<!-- FULL SCREEN PLAYER -->
+<div class="full-player" id="fullPlayer">
+  <div class="full-header">
+    <button class="close-full" id="closeFull">⌄</button>
+    <div style="font-size:0.8rem; letter-spacing:2px; font-weight:900; color:var(--gold);">NOW PLAYING</div>
+    <div></div>
+  </div>
+
+  <div class="full-art-container" id="artContainer">
+    <img class="full-art" id="fullArt" src="" alt="Art">
+  </div>
+
+  <div class="lyrics-box" id="lyricsDisplay">✨ Touch & Hold art for 3D Glow | Swipe Left/Right to change track</div>
+
+  <div class="controls-area">
+    <div>
+      <div style="font-size:1.1rem; font-weight:900;" id="fullTitle">Title</div>
+      <div style="color:var(--muted); font-size:0.85rem;" id="fullArtist">Artist</div>
+    </div>
+    <input type="range" class="progress-slider" id="progressBar" value="0" min="0" max="100">
+    <div class="playback-buttons">
+      <button class="control-btn" id="shuffleBtn">🔀</button>
+      <button class="control-btn" id="prevBtn">⏮</button>
+      <button class="control-btn play-pause-big" id="fullPlayBtn">▶</button>
+      <button class="control-btn" id="nextBtn">⏭</button>
+      <button class="control-btn" id="repeatBtn">🔁</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- 1. THREE.JS 3D BACKGROUND ---
+const canvas = document.getElementById('bg-canvas');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const particlesGeometry = new THREE.BufferGeometry();
+const particlesCount = 700;
+const posArray = new Float32Array(particlesCount * 3);
+
+for(let i=0; i<particlesCount*3; i++) {
+  posArray[i] = (Math.random() - 0.5) * 10;
+}
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+const particlesMaterial = new THREE.PointsMaterial({ size: 0.025, color: 0x00e5ff });
+const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particlesMesh);
+camera.position.z = 3;
+
+function animateThree() {
+  requestAnimationFrame(animateThree);
+  particlesMesh.rotation.y += 0.001;
+  particlesMesh.rotation.x += 0.0005;
+  renderer.render(scene, camera);
+}
+animateThree();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- 2. MUSIC APP LOGIC & WORKING JAMENDO API ---
+const tracks = [
+  { title: "Epic Cinematic Adventure", artist: "AudioCoffee", src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf756.mp3?filename=cinematic-time-lapse-115672.mp3", cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500" },
+  { title: "Lofi Study Beats", artist: "FASSounds", src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=lofi-study-112191.mp3", cover: "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=500" },
+  { title: "Cyberpunk Street", artist: "Alex-Productions", src: "https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=cyberpunk-2099-107010.mp3", cover: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500" }
+];
+
+let currentIndex = 0;
+let isPlaying = false;
+let isShuffle = false;
+let isRepeat = false;
+const audio = new Audio();
+
+const playlistEl = document.getElementById('playlist');
+const miniPlayer = document.getElementById('miniPlayer');
+const fullPlayer = document.getElementById('fullPlayer');
+const miniImg = document.getElementById('miniImg');
+const miniTitle = document.getElementById('miniTitle');
+const miniArtist = document.getElementById('miniArtist');
+const miniPlayBtn = document.getElementById('miniPlayBtn');
+const fullArt = document.getElementById('fullArt');
+const fullTitle = document.getElementById('fullTitle');
+const fullArtist = document.getElementById('fullArtist');
+const fullPlayBtn = document.getElementById('fullPlayBtn');
+const progressBar = document.getElementById('progressBar');
+
+function renderPlaylist() {
+  playlistEl.innerHTML = tracks.map((t, i) => `
+    <div class="track-card" onclick="playTrack(${i})">
+      <img src="${t.cover}" alt="">
+      <div class="track-info">
+        <div class="track-title">${t.title}</div>
+        <div class="track-artist">${t.artist}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadTrack(index) {
+  currentIndex = index;
+  const t = tracks[index];
+  audio.src = t.src;
+  miniImg.src = t.cover;
+  fullArt.src = t.cover;
+  miniTitle.textContent = t.title;
+  fullTitle.textContent = t.title;
+  miniArtist.textContent = t.artist;
+  fullArtist.textContent = t.artist;
+}
+
+function playTrack(index) {
+  loadTrack(index);
+  audio.play();
+  isPlaying = true;
+  updatePlayButtons();
+}
+
+function togglePlay() {
+  if(!audio.src) loadTrack(0);
+  if(isPlaying) { audio.pause(); isPlaying = false; }
+  else { audio.play(); isPlaying = true; }
+  updatePlayButtons();
+}
+
+function updatePlayButtons() {
+  miniPlayBtn.textContent = isPlaying ? "⏸" : "▶";
+  fullPlayBtn.textContent = isPlaying ? "⏸" : "▶";
+}
+
+miniPlayBtn.onclick = (e) => { e.stopPropagation(); togglePlay(); };
+fullPlayBtn.onclick = togglePlay;
+
+audio.ontimeupdate = () => {
+  if(audio.duration) {
+    progressBar.value = (audio.currentTime / audio.duration) * 100;
+  }
+};
+
+progressBar.oninput = (e) => {
+  if(audio.duration) {
+    audio.currentTime = (e.target.value / 100) * audio.duration;
+  }
+};
+
+audio.onended = () => {
+  if(isRepeat) { audio.play(); }
+  else { nextTrack(); }
+};
+
+function nextTrack() {
+  let next = isShuffle ? Math.floor(Math.random() * tracks.length) : (currentIndex + 1) % tracks.length;
+  playTrack(next);
+}
+
+function prevTrack() {
+  let prev = (currentIndex - 1 + tracks.length) % tracks.length;
+  playTrack(prev);
+}
+
+document.getElementById('nextBtn').onclick = nextTrack;
+document.getElementById('prevBtn').onclick = prevTrack;
+
+document.getElementById('shuffleBtn').onclick = (e) => {
+  isShuffle = !isShuffle;
+  e.target.classList.toggle('active', isShuffle);
+};
+
+document.getElementById('repeatBtn').onclick = (e) => {
+  isRepeat = !isRepeat;
+  e.target.classList.toggle('active', isRepeat);
+};
+
+// --- MINI TO FULL PLAYER EXPANSION ---
+miniPlayer.onclick = (e) => {
+  if(e.target === miniPlayBtn) return;
+  fullPlayer.classList.add('active');
+};
+document.getElementById('closeFull').onclick = () => {
+  fullPlayer.classList.remove('active');
+};
+
+// --- TOUCH AND HOLD 3D FEEDBACK ---
+const artContainer = document.getElementById('artContainer');
+let holdTimer;
+const triggerHoldStart = () => {
+  holdTimer = setTimeout(() => {
+    fullArt.classList.add('holding');
+    miniImg.classList.add('holding');
+    if(navigator.vibrate) navigator.vibrate(50);
+  }, 400);
+};
+const triggerHoldEnd = () => {
+  clearTimeout(holdTimer);
+  fullArt.classList.remove('holding');
+  miniImg.classList.remove('holding');
+};
+
+artContainer.onmousedown = triggerHoldStart;
+artContainer.onmouseup = triggerHoldEnd;
+artContainer.onttouchstart = triggerHoldStart;
+artContainer.ontouchend = triggerHoldEnd;
+
+// --- SWIPE GESTURES FOR TRACK CHANGE ---
+let touchStartX = 0;
+fullPlayer.onttouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+fullPlayer.ontouchend = (e) => {
+  let touchEndX = e.changedTouches[0].clientX;
+  if(touchStartX - touchEndX > 60) nextTrack();
+  if(touchEndX - touchStartX > 60) prevTrack();
+};
+
+renderPlaylist();
+loadTrack(0);
+</script>
+</body>
+</html>
