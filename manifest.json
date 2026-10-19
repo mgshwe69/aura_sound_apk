@@ -1,1 +1,16 @@
 
+{
+  "name": "Suiii7Sound",
+  "short_name": "Suiii7",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080612",
+  "theme_color": "#101027",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
