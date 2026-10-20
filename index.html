@@ -239,7 +239,7 @@ function renderNotFound(){pageEl.innerHTML=`<div class="empty"><div class="emoji
 function toggleLike(id){id=String(id);if(state.liked.includes(id)){state.liked=state.liked.filter(x=>x!==id);toast('Removed from Liked Songs')}else{state.liked.unshift(id);const t=state.tracks.find(x=>String(x.trackId)===id)||state.current;if(t&&!state.tracks.some(x=>String(x.trackId)===id))state.tracks.unshift(t);toast('Added to Liked Songs')}persist();if(state.page==='liked')renderLiked();else if(state.page==='playlist')renderPage({id:state.currentRouteId,push:false});updatePlayerLike()}
 function addToQueue(t,playNow=false){t=itemTrack(t);if(!t.trackId)return;state.queue.push(t);state.tracks=uniqueTracks([t,...state.tracks]);if(playNow)playTrack(t);else toast('Added to queue')}
 
-// 🔥 YAHAN CHANGE KIYA GAYA HAI (JioSaavn Source Integration) 🔥
+// 🔥 YAHAN CHANGE KIYA GAYA HAI (JioSaavn Full Song Play Source) 🔥
 async function playTrack(track){
     const t=itemTrack(track);
     if(!t.trackId){toast('This track is not available in the catalog.');return}
