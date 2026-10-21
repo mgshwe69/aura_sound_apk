@@ -252,9 +252,66 @@ async function playTrack(track){
  const t=itemTrack(track);if(!t.trackId){toast('This track is not available in the catalog.');return}
  state.tracks=uniqueTracks([t,...state.tracks]);if(!state.queue.some(x=>String(x.trackId)===String(t.trackId)))state.queue.push(t);
  state.queueIndex=state.queue.findIndex(x=>String(x.trackId)===String(t.trackId));state.current=t;state.playing=false;updatePlayer();
- const source=t.fullTrackUrl||t.previewUrl;if(!source){audio.pause();audio.removeAttribute('src');audio.load();updatePlayer();toast('This catalog item has no playable audio preview. Try another track.');return}
- try{audio.pause();audio.src=source;audio.load();toast(t.fullTrackUrl?'Loading authorized full track…':'Loading catalog preview…');await audio.play();state.playing=true;updatePlayer();addHistory(t);updatePersonalizedHome()}
- catch(err){state.playing=false;updatePlayer();toast(err?.name==='NotAllowedError'?'Tap Play again to allow audio playback.':'Audio could not start. The preview may be unavailable in your region; try another track.')}
+
+ // ---- Step 1: authorized full track (catalog provided) ----
+ let source=t.fullTrackUrl||null;
+ let label=source?'Loading authorized full track…':null;
+
+ // ---- Step 2: multi-source resolver (Audius → Saavn → iTunes) ----
+ if(!source){
+   toast('Resolving audio source…');
+   const query=`${t.trackName||''} ${t.artistName||''}`.trim();
+
+   // 2a. Audius (full song, CORS friendly)
+   if(!source && query){
+     try{
+       const r=await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(query)}&app_name=MyMusicApp&limit=1`);
+       if(r.ok){const d=await r.json();const tr=d?.data?.[0];
+         if(tr&&tr.is_streamable){source=`https://discoveryprovider.audius.co/v1/tracks/${tr.id}/stream?app_name=MyMusicApp`;label='Loading full track (Audius)…'}
+       }
+     }catch(e){console.warn('Audius failed:',e)}
+   }
+
+   // 2b. Saavn (full song, unofficial)
+   if(!source && query){
+     try{
+       const r=await fetch(`https://saavnapi-nine.vercel.app/result?query=${encodeURIComponent(query)}`);
+       if(r.ok){const d=await r.json();
+         if(d?.[0]?.media_url){source=d[0].media_url;label='Loading full track (Saavn)…'}
+       }
+     }catch(e){console.warn('Saavn failed:',e)}
+   }
+
+   // 2c. iTunes (30s preview fallback)
+   if(!source && query){
+     try{
+       const r=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
+       if(r.ok){const d=await r.json();
+         if(d?.results?.[0]?.previewUrl){source=d.results[0].previewUrl;label='Only 30s preview available (iTunes).';toast(label)}
+       }
+     }catch(e){console.warn('iTunes failed:',e)}
+   }
+ }
+
+ // ---- Step 3: catalog preview fallback ----
+ if(!source && t.previewUrl){source=t.previewUrl;label='Loading catalog preview…'}
+
+ // ---- Step 4: nothing playable ----
+ if(!source){
+   audio.pause();audio.removeAttribute('src');audio.load();updatePlayer();
+   toast('This catalog item has no playable audio preview. Try another track.');return
+ }
+
+ // ---- Step 5: play ----
+ try{
+   audio.pause();audio.src=source;audio.load();
+   toast(label||'Loading…');
+   await audio.play();
+   state.playing=true;updatePlayer();addHistory(t);updatePersonalizedHome();
+ }catch(err){
+   state.playing=false;updatePlayer();
+   toast(err?.name==='NotAllowedError'?'Tap Play again to allow audio playback.':'Audio could not start. The preview may be unavailable in your region; try another track.');
+ }
 }
 
 function playList(list,shuffle=false){const tracks=uniqueTracks(list||[]);if(!tracks.length){toast('No tracks available to play yet.');return}state.queue=shuffle?tracks.slice().sort(()=>Math.random()-.5):tracks;state.queueIndex=-1;playNext(1)}
