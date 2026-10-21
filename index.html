@@ -43,6 +43,37 @@ body.light-theme .artist-cinematic{background:#e7def7}body.light-theme .artist-v
 @keyframes creditGlow{from{text-shadow:0 0 5px #fff,0 0 10px #a78bfa,0 0 20px #8b5cf6}to{text-shadow:0 0 8px #fff,0 0 18px #c4b5fd,0 0 34px #8b5cf6,0 0 48px #7c3aed}}
 .seed-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#c4b5fd;margin-top:5px}
 
+
+
+/* MOBILE FIX: keep each song's play/action buttons visible, and keep synced
+   lyrics in their own scroll area beside/below the poster without covering it. */
+@media(max-width:800px){
+  .card-play{opacity:1!important;transform:none!important;right:7px;bottom:7px;width:38px;height:38px}
+  .track{grid-template-columns:20px 38px minmax(0,1fr) 30px 70px!important;gap:5px!important}
+  .track-actions{display:flex!important;grid-column:5;grid-row:1;gap:1px;justify-content:flex-end}
+  .track-actions button{width:23px;height:30px;padding:0;display:grid;place-items:center}
+  .track-time{grid-column:4;grid-row:1;font-size:10px}
+  .track-album{display:none!important}
+  #np3d{height:100dvh;min-height:0}
+  #np3d .np-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);min-height:0;overflow:hidden}
+  #np3d .np-stage{min-height:0;gap:7px}
+  #np3d .np-poster{width:min(25dvh,58vw,260px);flex:none}
+  #np3d .np-eq{height:20px}
+  #np3d .np-side{height:100%;min-height:0;max-height:none;overflow:hidden}
+  #np3d .np-meta{flex:none}
+  #np3d .np-lyrics{flex:1;min-height:0;overflow-y:auto;padding:3vh 0}
+  #np3d .np-lyrics p{font-size:clamp(17px,4.8vw,21px);margin-bottom:10px}
+  #np3d .np-ctrl{flex:none;margin-top:5px}
+  #np3d .np-btns{gap:10px;margin-top:3px}
+  #np3d .np-btns button{width:38px;height:38px}
+  #np3d .np-btns .big{width:48px;height:48px}
+}
+@media(max-width:380px){
+  .track{grid-template-columns:17px 34px minmax(0,1fr) 27px 62px!important;gap:3px!important}
+  .track-art{width:32px;height:32px}
+  .track-actions button{width:20px}
+}
+
 </style>
 </head>
 <body>
@@ -397,11 +428,13 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { getDatabase, ref, set, update, onValue, push, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 const firebaseConfig = {
-  apiKey: 'YOUR_FIREBASE_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT-default-rtdb.firebaseio.com',
-  projectId: 'YOUR_PROJECT',
-  appId: 'YOUR_FIREBASE_APP_ID'
+  apiKey: "AIzaSyAVHAXx7ZDWHQ0et7xKG-bRLp89K3EGac8",
+  authDomain: "aura-sound-2gether.firebaseapp.com",
+  databaseURL: "https://aura-sound-2gether-default-rtdb.firebaseio.com/",
+  projectId: "aura-sound-2gether",
+  storageBucket: "aura-sound-2gether.firebasestorage.app",
+  messagingSenderId: "502284763406",
+  appId: "1:502284763406:web:f804798198d2cec63d575f"
 };
 const $ = (s,r=document)=>r.querySelector(s);
 const audio = $('#audio');
@@ -434,7 +467,7 @@ function subscribeMusic(){ if(roomCode && db) connectRoom(roomCode); }
 audio?.addEventListener('play',()=>sendMusic('play'));audio?.addEventListener('pause',()=>sendMusic('pause'));audio?.addEventListener('seeked',()=>sendMusic('seek'));audio?.addEventListener('timeupdate',()=>sendMusic('time'));
 const originalOpen=window.openAuraTogether;window.openAuraTogether=openTogether;
 function addButton(){const actions=$('.top-actions');if(actions&&!$('#togetherBtn')){const b=document.createElement('button');b.id='togetherBtn';b.className='icon-btn';b.type='button';b.title='Aura Together — partner & messages';b.setAttribute('aria-label','Open partner key and messages');b.textContent='💔';b.onclick=()=>window.openAuraTogether();actions.prepend(b)}
-const settingsPage=$('#page');if(settingsPage&&!$('#settingsTogetherBtn')){const rows=settingsPage.querySelectorAll('.setting-row');if(rows.length){const row=document.createElement('div');row.className='setting-row';row.innerHTML='<div><strong>💬 Partner messages</strong><div class="tiny muted">Pair with your partner and sync listening across devices.</div></div><button class="btn secondary small" id="settingsTogetherBtn">Open Aura Together</button>';rows[0].parentNode.insertBefore(row,rows[0]);$('#settingsTogetherBtn').onclick=openTogether;}}}
+const settingsPage=$('#page');if(settingsPage&&!$('#settingsTogetherBtn')){const rows=settingsPage.querySelectorAll('.setting-row');if(rows.length){const row=document.createElement('div');row.className='setting-row';row.style.display='block';row.style.gridColumn='1 / -1';row.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong>💬 Partner messages</strong><div class="tiny muted">Enter your partner’s 6-character AURA TOGETHER key to send a message to their paired room.</div></div><button class="btn secondary small" id="settingsTogetherBtn" type="button">Open Together</button></div><form id="settingsPartnerMessageForm" style="display:grid;gap:8px;margin-top:12px"><input id="settingsPartnerKey" maxlength="6" autocomplete="off" placeholder="Partner Together key (6 characters)" aria-label="Partner Together key" required style="width:100%;min-width:0;text-transform:uppercase;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px"><textarea id="settingsPartnerMessage" maxlength="500" rows="3" placeholder="Write a message for your partner…" aria-label="Message to partner" required style="width:100%;min-width:0;resize:vertical;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit"></textarea><button class="btn primary" id="settingsPartnerSend" type="submit">Send message to partner</button><p class="tiny muted" id="settingsPartnerStatus" aria-live="polite">Note: this uses the AURA TOGETHER room key, not the local Aura login/access key.</p></form>';rows[0].parentNode.insertBefore(row,rows[0]);$('#settingsTogetherBtn').onclick=openTogether;$('#settingsPartnerKey').value=localStorage.getItem('aura_together_partner_key')||'';$('#settingsPartnerKey').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);localStorage.setItem('aura_together_partner_key',e.target.value)});$('#settingsPartnerMessageForm').onsubmit=async e=>{e.preventDefault();const key=$('#settingsPartnerKey').value.trim().toUpperCase();const input=$('#settingsPartnerMessage');const message=input.value.trim();const status=$('#settingsPartnerStatus');const send=$('#settingsPartnerSend');if(key.length!==6){status.textContent='Enter the 6-character Together key.';return}if(!message){status.textContent='Write a message first.';return}if(!await ready()){status.textContent='Firebase is not connected. Check Firebase Anonymous Authentication and Realtime Database rules.';return}send.disabled=true;send.textContent='Sending…';status.textContent='Sending message…';try{await push(ref(db,'rooms/'+key+'/messages'),{from:uid,name:localStorage.getItem('as_demo_key_user_v1')||localStorage.getItem('as_profile_v2')&&JSON.parse(localStorage.getItem('as_profile_v2')).username||'Listener',text:message,at:serverTimestamp()});input.value='';status.textContent='Message sent to the Together room. Your partner can see it in AURA TOGETHER Messages.';toast('Partner message sent.')}catch(err){status.textContent='Message failed. Check that the key is correct and Firebase database rules allow messages.'}finally{send.disabled=false;send.textContent='Send message to partner'}};}}}
 new MutationObserver(addButton).observe(document.body,{childList:true,subtree:true});addButton();
 // Reconnect stored room after configuration has been completed and the user opens the feature.
 const oldOpenTogether=openTogether;window.openAuraTogether=async()=>{oldOpenTogether();if(configReady&&roomCode&&await ready())connectRoom(roomCode)};
