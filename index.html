@@ -468,7 +468,7 @@ audio?.addEventListener('play',()=>sendMusic('play'));audio?.addEventListener('p
 const originalOpen=window.openAuraTogether;window.openAuraTogether=openTogether;
 function addButton(){const actions=$('.top-actions');if(actions&&!$('#togetherBtn')){const b=document.createElement('button');b.id='togetherBtn';b.className='icon-btn';b.type='button';b.title='Aura Together — partner & messages';b.setAttribute('aria-label','Open partner key and messages');b.textContent='💔';b.onclick=()=>window.openAuraTogether();actions.prepend(b)}
 const settingsPage=$('#page');if(settingsPage&&!$('#settingsTogetherBtn')){const rows=settingsPage.querySelectorAll('.setting-row');if(rows.length){const row=document.createElement('div');row.className='setting-row';row.style.display='block';row.style.gridColumn='1 / -1';row.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><strong>💬 Partner messages</strong><div class="tiny muted">Enter your partner’s 6-character AURA TOGETHER key to send a message to their paired room.</div></div><button class="btn secondary small" id="settingsTogetherBtn" type="button">Open Together</button></div><form id="settingsPartnerMessageForm" style="display:grid;gap:8px;margin-top:12px"><input id="settingsPartnerKey" maxlength="6" autocomplete="off" placeholder="Partner Together key (6 characters)" aria-label="Partner Together key" required style="width:100%;min-width:0;text-transform:uppercase;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px"><textarea id="settingsPartnerMessage" maxlength="500" rows="3" placeholder="Write a message for your partner…" aria-label="Message to partner" required style="width:100%;min-width:0;resize:vertical;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit"></textarea><button class="btn primary" id="settingsPartnerSend" type="submit">Send message to partner</button><p class="tiny muted" id="settingsPartnerStatus" aria-live="polite">Note: this uses the AURA TOGETHER room key, not the local Aura login/access key.</p></form>';rows[0].parentNode.insertBefore(row,rows[0]);$('#settingsTogetherBtn').onclick=openTogether;$('#settingsPartnerKey').value=localStorage.getItem('aura_together_partner_key')||'';$('#settingsPartnerKey').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);localStorage.setItem('aura_together_partner_key',e.target.value)});$('#settingsPartnerMessageForm').onsubmit=async e=>{e.preventDefault();const key=$('#settingsPartnerKey').value.trim().toUpperCase();const input=$('#settingsPartnerMessage');const message=input.value.trim();const status=$('#settingsPartnerStatus');const send=$('#settingsPartnerSend');if(key.length!==6){status.textContent='Enter the 6-character Together key.';return}if(!message){status.textContent='Write a message first.';return}if(!await ready()){status.textContent='Firebase is not connected. Check Firebase Anonymous Authentication and Realtime Database rules.';return}send.disabled=true;send.textContent='Sending…';status.textContent='Sending message…';try{await push(ref(db,'rooms/'+key+'/messages'),{from:uid,name:localStorage.getItem('as_demo_key_user_v1')||localStorage.getItem('as_profile_v2')&&JSON.parse(localStorage.getItem('as_profile_v2')).username||'Listener',text:message,at:serverTimestamp()});input.value='';status.textContent='Message sent to the Together room. Your partner can see it in AURA TOGETHER Messages.';toast('Partner message sent.')}catch(err){status.textContent='Message failed. Check that the key is correct and Firebase database rules allow messages.'}finally{send.disabled=false;send.textContent='Send message to partner'}};}}}
-new MutationObserver(addButton).observe(document.body,{childList:true,subtree:true});addButton();
+new MutationObserver(()=>{if(addButton.q)return;addButton.q=requestAnimationFrame(()=>{addButton.q=0;addButton()})}).observe(document.body,{childList:true,subtree:true});addButton();
 // Reconnect stored room after configuration has been completed and the user opens the feature.
 const oldOpenTogether=openTogether;window.openAuraTogether=async()=>{oldOpenTogether();if(configReady&&roomCode&&await ready())connectRoom(roomCode)};
 </script>
@@ -962,11 +962,11 @@ const ct=t.replace(/\s*[\(\[].*?[\)\]]/g,'').replace(/\s-\s.*$/,'').trim(),ca=a.
 try{const r=await(await fetch('https://lrclib.net/api/search?track_name='+encodeURIComponent(ct)+'&artist_name='+encodeURIComponent(ca))).json();if(k!==lkey||!np)return;const s=r.find(x=>x.syncedLyrics),p=r.find(x=>x.plainLyrics);
 if(s){s.syncedLyrics.split('\n').forEach(l=>{const m=l.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)/);if(m&&m[3].trim())lyr.push({t:+m[1]*60+ +m[2],s:m[3].trim()})});box.innerHTML=lyr.map((l,i)=>`<p data-i="${i}">${esc(l.s)}</p>`).join('')}
 else if(p)box.innerHTML=p.plainLyrics.split('\n').map(l=>`<p class="pl">${esc(l)||'&nbsp;'}</p>`).join('');else box.innerHTML='<p class="ly-s">No lyrics found for this song.</p>'}catch{if(k===lkey&&$('#npLy'))$('#npLy').innerHTML='<p class="ly-s">Lyrics failed to load.</p>'}}
-function loop(){if(!np)return;raf=requestAnimationFrame(loop);const tm=performance.now()/1000,playing=!audio.paused;let b=0,m=0;const bars=np._bars,real=an&&playing;
+let skipF=false;function loop(){if(!np)return;raf=requestAnimationFrame(loop);if(document.hidden)return;if(document.documentElement.classList.contains('lite')&&(skipF=!skipF))return;const tm=performance.now()/1000,playing=!audio.paused;let b=0,m=0;const bars=np._bars,real=an&&playing;
 if(real){an.getByteFrequencyData(buf);let sb=0,sm=0;for(let i=0;i<6;i++)sb+=buf[i];for(let i=6;i<40;i++)sm+=buf[i];b=sb/6/255;m=sm/34/255}
 const fake=playing&&b+m<.02;if(fake){b=Math.pow(1-((tm*2)%1),3)*.8;m=.25+.2*Math.sin(tm*5)}
-b=Math.min(1,Math.pow(b,1.7)*1.5);bass=bass*.5+b*.5;mid=mid*.7+m*.3;np.style.setProperty('--bass',bass.toFixed(3));np.style.setProperty('--mid',mid.toFixed(3));
-np.style.setProperty('--rx',(Math.sin(tm*.9)*6+py*14).toFixed(2)+'deg');np.style.setProperty('--ry',(Math.cos(tm*.7)*10+px*18).toFixed(2)+'deg');
+b=Math.min(1,Math.pow(b,1.7)*1.5);bass=bass*.5+b*.5;mid=mid*.7+m*.3;(np._pv||(np._pv=np.querySelector('.np-poster')||np)).style.setProperty('--bass',bass.toFixed(3));(np._pv||(np._pv=np.querySelector('.np-poster')||np)).style.setProperty('--mid',mid.toFixed(3));
+(np._pv||(np._pv=np.querySelector('.np-poster')||np)).style.setProperty('--rx',(Math.sin(tm*.9)*6+py*14).toFixed(2)+'deg');(np._pv||(np._pv=np.querySelector('.np-poster')||np)).style.setProperty('--ry',(Math.cos(tm*.7)*10+px*18).toFixed(2)+'deg');
 bars.forEach((el,i)=>{const v=real&&!fake?buf[i*2+2]/255:playing?.35+.35*Math.abs(Math.sin(tm*4+i*.7))*(.4+bass):0;el.style.transform=`scaleY(${(.1+v*.9).toFixed(3)})`});
 const d=audio.duration,cur=audio.currentTime;if(document.activeElement?.id!=='npSeek')$('#npSeek').value=d?cur/d*1000:0;$('#npCur').textContent=fmt(cur);$('#npDur').textContent=fmt(d);$('#npPlay').textContent=playing?'Ⅱ':'▶';
 if(lyr.length){let i=-1;for(let j=0;j<lyr.length;j++){if(lyr[j].t<=cur+.2)i=j;else break}if(i!==act){const box=$('#npLy');box.querySelector('p.on')?.classList.remove('on');act=i;const p=box.querySelector(`p[data-i="${i}"]`);if(p){p.classList.add('on');box.scrollTo({top:p.offsetTop-box.clientHeight/2+p.clientHeight/2,behavior:'smooth'})}}}}
@@ -1135,7 +1135,7 @@ let rAt='',unsubs=[];const t0=Date.now();
 async function attachRoom(){const room=LS.getItem('aura_together_room')||'';if(room===rAt)return;unsubs.forEach(f=>f());unsubs=[];rAt=room;if(!room)return;try{const uid=await ready();set(ref(db,`rooms/${room}/members/${uid}`),S?.u||'Listener').catch(()=>{});
 unsubs.push(onValue(ref(db,`rooms/${room}/members`),s=>{const o=Object.entries(s.val()||{}).find(([k])=>k!==uid),p=o?o[1]:'';if(S&&p&&p!==P?.partner){P={...P,partner:p};js('lt_profile',P);update(ref(db,'profiles/'+S.u),{partner:p}).catch(()=>{})}}));
 unsubs.push(onChildAdded(ref(db,`rooms/${room}/messages`),s=>{const m=s.val();if(!m||m.from===uid||(m.at||Date.now())<t0-8000)return;msgPop(m)}))}catch{}}
-function msgPop(m){if($('#togetherChat'))return;let h=$('#ltPops');if(!h){h=mk('div');h.id='ltPops';document.body.append(h)}const d=mk('button','lt-pop');d.innerHTML=`<b>${esc(m.name||'Partner')}</b><span>${esc(m.text)}</span>`;d.onclick=()=>{d.remove();window.openAuraTogether?.()};h.append(d);try{navigator.vibrate?.(80)}catch{}setTimeout(()=>d.remove(),5000);while(h.children.length>3)h.firstChild.remove()}
+function msgPop(m){if($('#togetherChat')||window.AuraChat)return;let h=$('#ltPops');if(!h){h=mk('div');h.id='ltPops';document.body.append(h)}const d=mk('button','lt-pop');d.innerHTML=`<b>${esc(m.name||'Partner')}</b><span>${esc(m.text)}</span>`;d.onclick=()=>{d.remove();window.openAuraTogether?.()};h.append(d);try{navigator.vibrate?.(80)}catch{}setTimeout(()=>d.remove(),5000);while(h.children.length>3)h.firstChild.remove()}
 setInterval(attachRoom,2500);attachRoom();
 /* ---------- Admin ---------- */
 async function adminUI(){try{await ready();const r=await signInWithPopup(auth,new GoogleAuthProvider());if((r.user.email||'').toLowerCase()!==ADMIN){await signOut(auth);say('This Google account is not authorized.');return}}catch{say('Admin sign-in failed or was cancelled.');return}
@@ -1182,7 +1182,7 @@ stg.addEventListener('pointerup',e=>{if(!down)return;down=false;clearTimeout(lp)
 stg.addEventListener('pointercancel',()=>{down=false;scrub=false;clearTimeout(lp);stg.classList.remove('scrub')});
 (function tick(){if(!np.isConnected)return;requestAnimationFrame(tick);if(document.hidden)return;fr++;const im=$('#ltImg'),pa=$('#playerArt')?.src,hi=pa?pa.replace(/\d+x\d+bb/,'600x600bb'):'';if(hi&&im.getAttribute('href')!==hi)im.setAttribute('href',hi);
 if(!scrub){const d=audio.duration,c=audio.currentTime;show(d?c/d:0);tm.innerHTML=`<b>${tf(c)}</b> | <span>${tf(d)}</span>`}
-const b=parseFloat(np.style.getPropertyValue('--bass'))||0;blob.style.transform='';if(fr%30===0)hb.textContent=$('#playerLike')?.textContent||'♡'})()}
+const b=parseFloat(po.style.getPropertyValue('--bass'))||0;blob.style.transform='';if(fr%30===0)hb.textContent=$('#playerLike')?.textContent||'♡'})()}
 new MutationObserver(()=>{if($('#np3d')&&!$('#np3d').dataset.lt)enhanceNP()}).observe(document.body,{childList:true});
 window.AuraUI={signup:signupUI,login:loginUI,profile:profileUI,artists:pickUI,admin:adminUI};
 
@@ -1244,20 +1244,35 @@ const vis=()=>{if(!document.hidden){beat();join()}};document.addEventListener('v
 bgUn.push(onValue(ref(db,P),s=>{const r=s.val();if(!r)return;pid=r.owner===uid?r.partner:r.owner;const p=!!r.partner&&r.partner!==r.owner;if(p&&!paired){paired=true;join()}paired=p}));
 bgUn.push(onChildAdded(query(ref(db,P+'/events'),limitToLast(1)),s=>{const e=s.val();if(!e||e.from===uid||(e.at||Date.now())<t0-8000)return;pop('💞 '+(e.name||'Your partner')+' is here','They just opened Aura Sounds. Say hi 👋')}));
 bgUn.push(onValue(ref(db,P+'/music'),s=>{const m=s.val();if(!m||m.by===uid||!m.title||m.title===lastT||(m.stamp||0)<t0-8000)return;lastT=m.title;pop('🎵 Your partner is playing',m.title+(m.artist?' — '+m.artist:''))}));
-bgUn.push(onChildAdded(query(ref(db,P+'/messages'),limitToLast(1)),s=>{const m=s.val();if(!m||m.from===uid||(m.at||Date.now())<t0-8000)return;set(ref(db,P+'/dlv/'+uid),serverTimestamp()).catch(()=>{});sys('💬 '+(m.name||'Partner'),String(m.text).slice(0,140))}))}
+bgUn.push(onChildAdded(query(ref(db,P+'/messages'),limitToLast(1)),s=>{const m=s.val();if(!m||m.from===uid||(m.at||Date.now())<t0-8000)return;set(ref(db,P+'/dlv/'+uid),serverTimestamp()).catch(()=>{});if(!$('#acIn')){LS.setItem('ac_unread',String((+LS.getItem('ac_unread')||0)+1));showHead(m)}sys('💬 '+(m.name||'Partner'),String(m.text).slice(0,140))}))}
 setInterval(bgCheck,3000);bgCheck();
+/* ---------- Messenger-style chat head ---------- */
+const head$={el:null,n:0,pvT:0};
+function openChat(){hideHead();window.openAuraTogether?.()}
+function headEl(){if(head$.el)return head$.el;const e=mk('div','ach');e.id='achead';e.innerHTML='<div class="ach-av"></div><i class="ach-n"></i><div class="ach-pv" hidden></div>';document.body.append(e);const x=mk('div','ach-x');x.id='achx';x.textContent='×';document.body.append(x);
+let sx=0,sy=0,ox=0,oy=0,drag=false,moved=false,pos={};try{pos=JSON.parse(LS.getItem('ach_pos'))||{}}catch{}let X=pos.x??innerWidth-64,Y=pos.y??innerHeight*.45;
+const put=(a,b)=>{X=a;Y=b;e.style.transform=`translate3d(${a}px,${b}px,0)`};put(Math.max(8,Math.min(X,innerWidth-64)),Math.max(60,Math.min(Y,innerHeight-130)));
+e.addEventListener('pointerdown',ev=>{drag=true;moved=false;sx=ev.clientX;sy=ev.clientY;ox=X;oy=Y;try{e.setPointerCapture(ev.pointerId)}catch{}});
+e.addEventListener('pointermove',ev=>{if(!drag)return;const dx=ev.clientX-sx,dy=ev.clientY-sy;if(!moved&&Math.hypot(dx,dy)>6){moved=true;x.classList.add('on')}if(moved){put(ox+dx,oy+dy);const r=x.getBoundingClientRect(),c=e.getBoundingClientRect();x.classList.toggle('hot',Math.hypot(c.x+c.width/2-(r.x+r.width/2),c.y+c.height/2-(r.y+r.height/2))<70)}});
+const end=()=>{if(!drag)return;drag=false;x.classList.remove('on');if(!moved){openChat();return}if(x.classList.contains('hot')){x.classList.remove('hot');hideHead();return}
+const nx=X+28<innerWidth/2?8:innerWidth-64;e.classList.add('snap');put(nx,Math.max(60,Math.min(Y,innerHeight-130)));setTimeout(()=>e.classList.remove('snap'),260);LS.setItem('ach_pos',JSON.stringify({x:X,y:Y}))};
+e.addEventListener('pointerup',end);e.addEventListener('pointercancel',end);return head$.el=e}
+function showHead(m){const e=headEl();head$.n++;e.classList.add('on');e.querySelector('.ach-av').textContent=((m.name||'?')[0]||'?').toUpperCase();const n=e.querySelector('.ach-n');n.textContent=head$.n>99?'99+':head$.n;
+const pv=e.querySelector('.ach-pv');pv.textContent=(m.name||'Partner')+': '+String(m.text).slice(0,80);pv.hidden=false;pv.classList.toggle('left',e.getBoundingClientRect().x>innerWidth/2);clearTimeout(head$.pvT);head$.pvT=setTimeout(()=>pv.hidden=true,4500);try{navigator.vibrate?.(60)}catch{}}
+function hideHead(){head$.n=0;head$.el?.classList.remove('on');$('#achx')?.classList.remove('on')}
+window.AuraHead={msg:showHead,hide:hideHead};
 /* ---------- Chat UI ---------- */
 const EMO='😊😂🥰😍😘🥺😭😎🔥💗💞💕❤️😅🤗😴🎧🎵🎶👍🙏🎉✨🌙'.match(/\p{Extended_Pictographic}(?:\uFE0F)?/gu);
 const dayKey=t=>new Date(t).toDateString(),hm=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const dayLbl=t=>{const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return'Today';n.setDate(n.getDate()-1);return d.toDateString()===n.toDateString()?'Yesterday':d.toLocaleDateString([],{day:'numeric',month:'long',year:'numeric'})};
 const link=t=>esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 let cur=null;
-window.AuraChat={open(code,uid){cur?.();let dead=false,un=[],timers=[];const stop=()=>{dead=true;un.forEach(f=>f());timers.forEach(clearInterval);cur=null};cur=stop;init(code,uid,()=>dead,un,timers);return stop}};
+window.AuraChat={open(code,uid){cur?.();LS.setItem('ac_unread','0');hideHead();let dead=false,un=[],timers=[];const stop=()=>{dead=true;un.forEach(f=>f());timers.forEach(clearInterval);cur=null};cur=stop;init(code,uid,()=>dead,un,timers);return stop}};
 async function init(code,uid,isDead,un,timers){const chat=$('#togetherChat');if(!chat)return;let c;try{c=await ctx()}catch{chat.innerHTML='<div class="ac-empty">Could not connect. Check Firebase setup.</div>';return}if(!c||isDead())return;
 const{ref,get,set,push,onValue,onChildAdded,query,orderByKey,limitToLast,endBefore,startAfter,serverTimestamp}=F,P='rooms/'+code,PAGE=120;
 let w=chat.closest('.ac-wrap');if(w){w.querySelector('.ac-head')?.remove();w.querySelector('.ac-form')?.remove();w.querySelector('.ac-emo')?.remove();w.querySelector('.ac-fab')?.remove()}else{w=mk('div','ac-wrap');chat.before(w);w.append(chat)}
 chat.classList.add('ac-chat');chat.innerHTML='';const old=$('#togetherSendForm');if(old)old.style.display='none';
-const head=mk('div','ac-head');head.innerHTML='<div class="ac-couple"><div class="ac-av me" id="acMe"></div><div class="ac-ht">💞</div><div class="ac-av th" id="acTh">?</div></div><div class="ac-who"><b id="acName">Your partner</b><small id="acSt">connecting…</small></div><button type="button" class="ac-bell" id="acBell" aria-label="Enable notifications" title="Enable notifications">🔔</button>';w.prepend(head);
+const head=mk('div','ac-head');head.innerHTML='<div class="ac-couple"><div class="ac-av me" id="acMe"></div><div class="ac-ht">💞</div><div class="ac-av th" id="acTh">?</div></div><div class="ac-who"><b id="acName">Your partner</b><small id="acSt">connecting…</small></div><button type="button" class="ac-bell" id="acBell" aria-label="Enable notifications" title="Enable notifications">🔔</button><button type="button" class="ac-bell" id="acMenu" aria-label="More">⋮</button><div class="ac-menu" id="acMenuBox" hidden><button type="button" data-a="key">Copy partner key</button><button type="button" data-a="unpair">Unpair this device</button></div>';w.prepend(head);$('#acMenu').onclick=e=>{e.stopPropagation();$('#acMenuBox').hidden=!$('#acMenuBox').hidden};$('#acMenuBox').onclick=e=>{const a=e.target.dataset.a;if(!a)return;$('#acMenuBox').hidden=true;if(a==='key')$('#togetherCopyKey')?.click();else if(confirm('Unpair this device?'))$('#togetherUnpair')?.click()};
 const form=mk('form','ac-form');form.innerHTML='<button type="button" id="acEmoB" aria-label="Emoji">😊</button><textarea id="acIn" rows="1" placeholder="Message" enterkeyhint="send" aria-label="Message"></textarea><button class="ac-send" aria-label="Send">➤</button>';
 const emo=mk('div','ac-emo');emo.innerHTML=EMO.map(e=>`<button type="button">${e}</button>`).join('');const fab=mk('button','ac-fab');fab.type='button';fab.setAttribute('aria-label','Scroll to latest');w.append(fab,emo,form);
 const inp=$('#acIn');$('#acMe').textContent=(myName()[0]||'Y').toUpperCase();
@@ -1281,8 +1296,8 @@ inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('
 inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,120)+'px';const t=Date.now();if(!input_t||t-input_t>2500){input_t=t;set(ref(db,P+'/typing/'+uid),serverTimestamp()).catch(()=>{})}});let input_t=0;
 $('#acEmoB').onclick=()=>emo.classList.toggle('on');emo.onclick=e=>{const b=e.target.closest('button');if(!b)return;const s=inp.selectionStart??inp.value.length;inp.value=inp.value.slice(0,s)+b.textContent+inp.value.slice(inp.selectionEnd??s);inp.focus();inp.dispatchEvent(new Event('input'))};
 /* status */
-function status(){const p=pid,tn=now(),on=tn-(PR[p]||0)<45000,ty=tn-(TY[p]||0)<4500;$('#acTh').classList.toggle('on',on);$('#acName').textContent=partnerName||'Your partner';$('#acTh').textContent=(partnerName[0]||'?').toUpperCase();$('#acMe').classList.toggle('on',true);
-let s=!p?'waiting for your partner to join…':ty?'typing…':on?(!audio.paused?'💞 online · listening together':'online'):PR[p]?'last seen '+hm(PR[p]):'offline';$('#acSt').textContent=s}
+function status(){const st=(e,v)=>{if(e.textContent!==v)e.textContent=v};const p=pid,tn=now(),on=tn-(PR[p]||0)<45000,ty=tn-(TY[p]||0)<4500;$('#acTh').classList.toggle('on',on);st($('#acName'),partnerName||'Your partner');st($('#acTh'),(partnerName[0]||'?').toUpperCase());$('#acMe').classList.toggle('on',true);
+let s=!p?'waiting for your partner to join…':ty?'typing…':on?(!audio.paused?'💞 online · listening together':'online'):PR[p]?'last seen '+hm(PR[p]):'offline';st($('#acSt'),s)}
 timersPush(setInterval(()=>{status();ticks(false)},1500));function timersPush(t){timers.push(t)}
 /* listeners */
 un.push(onValue(ref(db,'.info/serverTimeOffset'),s=>{off=s.val()||0}));
@@ -1305,6 +1320,27 @@ document.addEventListener('visibilitychange',markRead);un.push(()=>document.remo
 .yt-box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;width:min(92vw,520px);aspect-ratio:16/9;background:#000;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px #0008}.yt-box iframe{width:100%;height:100%;border:0}
 .yt-x{position:absolute;right:8px;top:8px;z-index:2;width:34px;height:34px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:20px;cursor:pointer}
 
+.sm-badge{background:#25d366;color:#fff;border-radius:99px;padding:1px 8px;font-size:12px;margin-left:6px}
+/* full-screen chat */
+#togetherBackdrop:has(#togetherLive:not([hidden]) .ac-wrap){padding:0!important;place-items:stretch!important;background:var(--lt-bg)!important;z-index:9300}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap){width:100%!important;max-width:none!important;height:100dvh;max-height:none!important;border-radius:0!important;border:0!important;padding:0!important;display:flex!important;flex-direction:column;overflow:hidden!important;background:var(--lt-bg)!important}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap) .modal-head{flex:none;margin:0;padding:max(10px,env(safe-area-inset-top)) 14px 10px;border-bottom:1px solid var(--lt-line)}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap) .modal-head h2{font-size:16px;margin:0}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap) #togetherClose{width:44px;height:44px;font-size:26px;line-height:1}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap) :is(.together-hero,#togetherNotice,#togetherSetup){display:none!important}
+.together-modal:has(#togetherLive:not([hidden]) .ac-wrap)>p{display:none}
+#togetherLive:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0}
+#togetherLive:not([hidden])>:not(.ac-wrap){display:none!important}
+#togetherLive .ac-wrap{flex:1;display:flex;flex-direction:column;min-height:0;margin:0;border-radius:0;border:0}
+#togetherLive #togetherChat.ac-chat{flex:1;height:auto!important;min-height:0;contain:content}
+#togetherLive .ac-form{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+.ac-head{position:relative}.ac-menu{position:absolute;right:8px;top:100%;z-index:6;background:var(--wa-th);color:var(--wa-tx);border-radius:12px;box-shadow:0 8px 24px #0004;overflow:hidden}.ac-menu[hidden]{display:none}.ac-menu button{display:block;width:100%;padding:12px 18px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.ach{position:fixed;left:0;top:0;z-index:9400;width:56px;height:56px;display:none;touch-action:none;cursor:grab;will-change:transform}.ach.on{display:block;animation:achIn .35s cubic-bezier(.2,1.4,.4,1)}.ach.snap{transition:transform .25s cubic-bezier(.2,.9,.2,1)}@keyframes achIn{from{scale:.3}}
+.ach-av{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(145deg,#ff7ab8,#d63a8a);box-shadow:0 6px 20px #0006,0 0 0 3px #fff;user-select:none}
+.ach-n{position:absolute;right:-4px;top:-4px;min-width:22px;height:22px;padding:0 5px;border-radius:11px;background:#ff3b30;color:#fff;font:700 12px/22px sans-serif;text-align:center;font-style:normal;box-sizing:border-box}
+.ach-pv{position:absolute;top:8px;left:66px;width:max-content;max-width:62vw;padding:8px 12px;border-radius:16px;background:#fff;color:#111;font-size:13px;box-shadow:0 6px 20px #0004;pointer-events:none}.ach-pv.left{left:auto;right:66px}
+.ach-x{position:fixed;left:50%;bottom:28px;width:56px;height:56px;margin-left:-28px;border-radius:50%;background:#000b;color:#fff;font-size:26px;display:none;place-items:center;z-index:9390;transition:transform .15s,background .15s}.ach-x.on{display:grid}.ach-x.hot{transform:scale(1.3);background:#ff3b30}
+.np-poster{will-change:transform}.np-lyrics p{transition:opacity .3s,transform .3s!important}
 </style>
 <script type="module">
 /* Settings "Messages" button + official full-song player (YouTube embed, needs your own free YouTube Data API key). */
@@ -1312,9 +1348,13 @@ const $=s=>document.querySelector(s),LS=localStorage,audio=$('#audio');
 const mk=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
 const say=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>t.classList.remove('show'),3200)};
 const logged=()=>{try{return !!JSON.parse(LS.getItem('lt_session'))}catch{return false}};
-function settingsBtn(){const p=$('#page'),h=p?.querySelector('h1.page-title');if(!h||!/^settings$/i.test(h.textContent.trim())||$('#settingsMsgRow'))return;const first=p.querySelector('.setting-row');if(!first)return;
+const BUILD='v9 · 22 Oct';
+function settingsBtn(){const p=$('#page');if(!p||$('#settingsMsgRow'))return;const h=p.querySelector('h1,h2');if(!h||!/settings/i.test(h.textContent))return;
 const r=mk('div','setting-row');r.id='settingsMsgRow';r.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;grid-column:1 / -1';
-r.innerHTML='<div><strong>💬 Messages</strong><div class="tiny muted">Open your private chat with your partner.</div></div><button class="btn primary" id="settingsMsgBtn" type="button">Open chat</button>';first.before(r);$('#settingsMsgBtn').onclick=()=>window.openAuraTogether?.()}
+r.innerHTML=`<div><strong>💬 Messages <span id="smBadge" class="sm-badge" hidden></span></strong><div class="tiny muted">Open your private chat with your partner · Build ${BUILD}</div></div><button class="btn primary" id="settingsMsgBtn" type="button">Open chat</button>`;
+const first=p.querySelector('.setting-row');first?first.before(r):h.after(r);
+$('#settingsMsgBtn').onclick=()=>{if(window.openAuraTogether)window.openAuraTogether();else say('Chat could not load. Check your connection and Firebase setup, then refresh.')}}
+setInterval(()=>{const b=$('#smBadge');if(!b)return;const n=+LS.getItem('ac_unread')||0;b.hidden=!n;b.textContent=n+' new'},1500);
 /* official full song: YouTube IFrame player (visible, as YouTube's terms require) */
 let ytApi=null;const loadYT=()=>ytApi||(ytApi=new Promise(res=>{if(window.YT?.Player)return res();window.onYouTubeIframeAPIReady=res;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.append(s)}));
 async function playFull(np){const title=$('#playerTitle')?.textContent.trim(),artist=$('#playerArtist')?.textContent.trim();if(!title)return;
@@ -1324,7 +1364,7 @@ if(r.error){if(/key|API_KEY/i.test(r.error.message||''))LS.removeItem('lt_yt_key
 audio.pause();$('#ytBox')?.remove();const box=mk('div','yt-box');box.id='ytBox';box.innerHTML='<button class="yt-x" aria-label="Close player">×</button><div id="ytp"></div>';np.append(box);
 let pl;box.querySelector('.yt-x').onclick=()=>{try{pl?.destroy()}catch{}box.remove()};await loadYT();pl=new YT.Player('ytp',{videoId:id,width:'100%',height:'100%',playerVars:{autoplay:1,playsinline:1,rel:0},events:{onReady:e=>e.target.playVideo()}})}catch{say('Could not reach YouTube. Check your connection.')}}
 function npBtn(){const np=$('#np3d');if(!np||!np.dataset.lt||np.querySelector('.lt-full'))return;const b=mk('button','lt-full');b.type='button';const g=logged();b.textContent=g?'▶ Play full song':'🔒 Full song — sign up';b.onclick=()=>{if(g)playFull(np);else{$('#npClose')?.click();window.AuraUI?.signup?.()}};($('#ltTime')||np.querySelector('.np-stage')).after(b)}
-new MutationObserver(()=>{settingsBtn();npBtn()}).observe(document.body,{childList:true,subtree:true});settingsBtn();
+new MutationObserver(()=>{if(settingsBtn.q)return;settingsBtn.q=requestAnimationFrame(()=>{settingsBtn.q=0;settingsBtn();npBtn()})}).observe(document.body,{childList:true,subtree:true});settingsBtn();
 
 </script>
 </body>
