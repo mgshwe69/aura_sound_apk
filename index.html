@@ -837,11 +837,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('.creator-glow')
  if(now-clicked[o]<5000){clicked.l=clicked.m=0;kiss(pickMovie());return}
  stopFx();k==='l'?bloom():thunder()});
 
-/* ---------- Legit full-song link (previews are 30s; full songs need a licensed service) ---------- */
-(()=>{const au=$('#audio'),host=document.querySelector('.player-right');if(!au||!host)return;
- const a=document.createElement('a');a.id='auraFull';a.className='control extra-controls';a.target='_blank';a.rel='noopener noreferrer';a.textContent='Full ↗';a.title='Open the full song on Apple Music';a.setAttribute('aria-label','Open the full song on Apple Music');a.style.cssText='display:none;align-items:center;justify-content:center;text-decoration:none;font-size:12px;width:auto;padding:0 10px';host.insertBefore(a,host.firstChild);
- const up=()=>{const t=($('#playerTitle')?.textContent||'').trim(),h=jget('as_history',[]).find(x=>x&&x.trackName===t&&x.trackViewUrl);if(h){a.href=h.trackViewUrl;a.style.display='inline-flex'}else a.style.display='none'};
- ['playing','loadeddata'].forEach(ev=>au.addEventListener(ev,()=>setTimeout(up,350)))})();
+
 
 syncUI();rank();forYou();
 })();
@@ -915,7 +911,7 @@ body.light-theme{--g-bg:rgba(255,255,255,.55);--g-bg2:rgba(255,255,255,.75);--g-
 <script>
 (()=>{'use strict';
 /* AURA SOUNDS · glass add-on by MG1SHWE — original code untouched */
-const AUDD_TOKEN='1ddf8b0b797e1940906c2502b0683563'; // <-- apna AudD API token yahan daalo (ya mic dabane par paste karo)
+const AUDD_TOKEN='1ddf8b0b797e1940906c2502b0683563'; // <-- put your AudD API token here (or paste it when you tap the mic)
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],audio=$('#audio');
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -929,27 +925,27 @@ const sp=mk('div');sp.id='splash';sp.innerHTML='<div class="sp-mark"><i></i><i><
 document.body.prepend(sp);const hideSp=()=>{sp.classList.add('out');setTimeout(()=>sp.remove(),800)};sp.onclick=hideSp;setTimeout(hideSp,3600);
 /* ---- Multi-artist split ---- */
 const SEP=/(\s*(?:,|&|×|\sx\s|\bfeat\.?|\bft\.?|\bfeaturing|\/)\s*)/i,SPLIT=/,|&|×|\sx\s|\bfeat|\bft\.?\s|featuring|\//i,KEEP=/earth, wind|tyler, the creator|simon & garfunkel|hall & oates|crosby, stills|florence|kool & the gang|black eyed|ac\/dc|of monsters|brooks & dunn|mumford/i;
-async function openByName(n){say('Artist khoj raha hoon…');try{const d=await itj('https://itunes.apple.com/search?term='+encodeURIComponent(n)+'&entity=musicArtist&limit=5'),r=d.results||[],a=r.find(x=>(x.artistName||'').toLowerCase()===n.toLowerCase())||r[0];if(!a)throw 0;location.hash='artist/'+a.artistId}catch{say('Is artist ka profile nahi mila')}}
+async function openByName(n){say('Finding artist…');try{const d=await itj('https://itunes.apple.com/search?term='+encodeURIComponent(n)+'&entity=musicArtist&limit=5'),r=d.results||[],a=r.find(x=>(x.artistName||'').toLowerCase()===n.toLowerCase())||r[0];if(!a)throw 0;location.hash='artist/'+a.artistId}catch{say('Artist profile not found')}}
 /* ---- Follow ---- */
 const FK='as_follow_v1',fl=()=>ld(FK,[]),isF=id=>fl().some(a=>String(a.id)===String(id));
 function toggleF(a){let l=fl();if(isF(a.id)){l=l.filter(x=>String(x.id)!==String(a.id));say('Unfollowed '+a.name)}else{l.unshift(a);say('Following '+a.name+' ✓')}sv(FK,l);refreshF();settingsFx()}
 function refreshF(){$$('.follow-btn,.follow-chip').forEach(b=>{const on=isF(b.dataset.fid);b.classList.toggle('on',on);b.textContent=b.classList.contains('follow-btn')?(on?'✓ Following':'＋ Follow'):(on?'✓':'＋')})}
-function settingsFx(){const p=$('#page'),h=p?.querySelector('h1.page-title');if(!h||!/^settings$/i.test(h.textContent.trim()))return;let s=$('#followSec');if(!s){s=mk('section','follow-sec');s.id='followSec';p.append(s)}const l=fl(),html='<h2>Following</h2>'+(l.length?l.map(a=>`<div class="fo-row"><button class="fo-open" data-oa="${esc(a.id)}"><img src="${esc(a.img||'')}" alt="" onerror="this.style.visibility='hidden'"><b>${esc(a.name)}</b></button><button class="btn secondary small fo-un" data-fid="${esc(a.id)}" data-fname="${esc(a.name)}" data-fimg="${esc(a.img||'')}">Unfollow</button></div>`).join(''):'<p class="muted">Abhi koi artist follow nahi kiya. Artist page ya card par ＋ dabao.</p>');if(s.dataset.h!==html){s.dataset.h=html;s.innerHTML=html}}
+function settingsFx(){const p=$('#page'),h=p?.querySelector('h1.page-title');if(!h||!/^settings$/i.test(h.textContent.trim()))return;let s=$('#followSec');if(!s){s=mk('section','follow-sec');s.id='followSec';p.append(s)}const l=fl(),html='<h2>Following</h2>'+(l.length?l.map(a=>`<div class="fo-row"><button class="fo-open" data-oa="${esc(a.id)}"><img src="${esc(a.img||'')}" alt="" onerror="this.style.visibility='hidden'"><b>${esc(a.name)}</b></button><button class="btn secondary small fo-un" data-fid="${esc(a.id)}" data-fname="${esc(a.name)}" data-fimg="${esc(a.img||'')}">Unfollow</button></div>`).join(''):'<p class="muted">You are not following any artist yet. Tap ＋ on an artist page or card.</p>');if(s.dataset.h!==html){s.dataset.h=html;s.innerHTML=html}}
 /* ---- Mic (AudD) ---- */
-async function listen(){let tk=AUDD_TOKEN||ld('as_audd','');if(!tk){tk=(prompt('Apna AudD API token paste karo (sirf is device me save hoga):')||'').trim();if(!tk)return;sv('as_audd',tk)}
-if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say('Mic ke liye HTTPS + supported browser chahiye');return}
-let st;try{st=await navigator.mediaDevices.getUserMedia({audio:true})}catch{say('Mic permission allow karo');return}
-const ov=mk('div','mic-ov');ov.innerHTML='<div class="mic-card"><div class="mic-pulse"><i></i><i></i><i></i></div><h3>Sun raha hoon…</h3><p class="muted">Gaana speaker ke paas rakho</p><button class="btn secondary" id="micStop">Cancel</button></div>';document.body.append(ov);
+async function listen(){let tk=AUDD_TOKEN||ld('as_audd','');if(!tk){tk=(prompt('Paste your AudD API token (saved on this device only):')||'').trim();if(!tk)return;sv('as_audd',tk)}
+if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say('The microphone needs HTTPS and a supported browser');return}
+let st;try{st=await navigator.mediaDevices.getUserMedia({audio:true})}catch{say('Please allow microphone access');return}
+const ov=mk('div','mic-ov');ov.innerHTML='<div class="mic-card"><div class="mic-pulse"><i></i><i></i><i></i></div><h3>Listening…</h3><p class="muted">Hold your phone near the speaker</p><button class="btn secondary" id="micStop">Cancel</button></div>';document.body.append(ov);
 const ch=[],mr=new MediaRecorder(st);let cancel=false;mr.ondataavailable=e=>e.data.size&&ch.push(e.data);const done=new Promise(r=>mr.onstop=r);mr.start();
 $('#micStop').onclick=()=>{cancel=true;mr.state!=='inactive'&&mr.stop()};setTimeout(()=>mr.state!=='inactive'&&mr.stop(),7000);await done;st.getTracks().forEach(t=>t.stop());
-if(cancel){ov.remove();return}ov.querySelector('h3').textContent='Pehchan raha hoon…';
+if(cancel){ov.remove();return}ov.querySelector('h3').textContent='Identifying…';
 try{const type=mr.mimeType||'audio/webm',fd=new FormData();fd.append('api_token',tk);fd.append('file',new Blob(ch,{type}),'clip.'+(type.includes('mp4')?'m4a':'webm'));
 const r=await(await fetch('https://api.audd.io/',{method:'POST',body:fd})).json();ov.remove();
-if(r.status==='success'&&r.result){say('Mila: '+r.result.title+' — '+r.result.artist);const i=$('#globalSearch');location.hash==='#search'||(location.hash='search');i.value=r.result.title+' '+r.result.artist;i.dispatchEvent(new Event('input',{bubbles:true}))}else say(r.error?.error_message||'Gaana pehchana nahi gaya, dobara try karo')}catch{ov.remove();say('AudD se connect nahi ho paya')}}
+if(r.status==='success'&&r.result){say('Found: '+r.result.title+' — '+r.result.artist);const i=$('#globalSearch');location.hash==='#search'||(location.hash='search');i.value=r.result.title+' '+r.result.artist;i.dispatchEvent(new Event('input',{bubbles:true}))}else say(r.error?.error_message||'Song not recognized, try again')}catch{ov.remove();say('Could not reach AudD')}}
 /* ---- 3D Now Playing: poster + lyrics together ---- */
 let np=null,raf=0,lyr=[],lkey='',skey='',ac,an,buf,wired=false,act=-1,bass=0,mid=0,px=0,py=0;
 function wire(){if(wired)return;try{ac=new(window.AudioContext||window.webkitAudioContext)();an=ac.createAnalyser();an.fftSize=256;an.smoothingTimeConstant=.78;ac.createMediaElementSource(audio).connect(an);an.connect(ac.destination);buf=new Uint8Array(an.frequencyBinCount);wired=true}catch{}}
-function openNP(){if(np)return;const t=$('#playerTitle')?.textContent.trim();if(!t||/choose a song/i.test(t)){say('Pehle koi gaana play karo');return}wire();ac?.resume?.();
+function openNP(){if(np)return;const t=$('#playerTitle')?.textContent.trim();if(!t||/choose a song/i.test(t)){say('Play a song first');return}wire();ac?.resume?.();
 np=mk('div');np.id='np3d';np.innerHTML=`<div class="np-bg"></div><div class="np-top"><button class="np-btn" id="npClose" aria-label="Close">⌄</button><span>NOW PLAYING</span><button class="np-btn" id="npShare" aria-label="Share">↗</button></div><div class="np-main"><div class="np-stage"><div class="np-poster"><span class="np-ring"></span><img id="npArt" alt="Poster"><b class="np-sheen"></b></div><div class="np-eq">${'<i></i>'.repeat(26)}</div></div><div class="np-side"><div class="np-meta"><h2 id="npTitle"></h2><p id="npArtist"></p></div><div class="np-lyrics" id="npLy"></div></div></div><div class="np-ctrl"><input id="npSeek" type="range" min="0" max="1000" value="0" aria-label="Seek"><div class="np-times"><span id="npCur">0:00</span><span id="npDur">0:00</span></div><div class="np-btns"><button id="npLike" aria-label="Like">♡</button><button id="npPrev" aria-label="Previous">◀◀</button><button id="npPlay" class="big" aria-label="Play">▶</button><button id="npNext" aria-label="Next">▶▶</button><button id="npShuf" aria-label="Shuffle">⤨</button></div></div>`;
 document.body.append(np);np._bars=[...np.querySelectorAll('.np-eq i')];
 const clk=(id,sel)=>$(id).onclick=()=>$(sel)?.click();clk('#npPrev','#prevBtn');clk('#npNext','#nextBtn');clk('#npPlay','#playBtn');clk('#npShuf','#shuffleBtn');clk('#npShare','#shareBtn');
@@ -961,11 +957,11 @@ fillNP(true);loop()}
 function closeNP(){cancelAnimationFrame(raf);np?.remove();np=null;lkey='';skey=''}
 function fillNP(force){if(!np)return;const t=$('#playerTitle').textContent.trim(),a=$('#playerArtist').textContent.trim(),im=$('#playerArt').src,k=t+'|'+a+'|'+im;if(!force&&k===skey)return;skey=k;
 $('#npTitle').textContent=t;$('#npArtist').textContent=a;const hi=im.replace(/\d+x\d+bb/,'600x600bb'),A=$('#npArt');A.onerror=()=>{A.onerror=null;A.src=im};A.src=hi;np.querySelector('.np-bg').style.backgroundImage=`url("${im}")`;$('#npLike').textContent=$('#playerLike').textContent;lyrics()}
-async function lyrics(){const t=$('#playerTitle').textContent.trim(),a=$('#playerArtist').textContent.trim(),k=t+'|'+a;if(k===lkey)return;lkey=k;lyr=[];act=-1;const box=$('#npLy');if(!box)return;box.innerHTML='<p class="ly-s">Lyrics dhoondh raha hoon…</p>';
+async function lyrics(){const t=$('#playerTitle').textContent.trim(),a=$('#playerArtist').textContent.trim(),k=t+'|'+a;if(k===lkey)return;lkey=k;lyr=[];act=-1;const box=$('#npLy');if(!box)return;box.innerHTML='<p class="ly-s">Finding lyrics…</p>';
 const ct=t.replace(/\s*[\(\[].*?[\)\]]/g,'').replace(/\s-\s.*$/,'').trim(),ca=a.split(SEP)[0].trim();
 try{const r=await(await fetch('https://lrclib.net/api/search?track_name='+encodeURIComponent(ct)+'&artist_name='+encodeURIComponent(ca))).json();if(k!==lkey||!np)return;const s=r.find(x=>x.syncedLyrics),p=r.find(x=>x.plainLyrics);
 if(s){s.syncedLyrics.split('\n').forEach(l=>{const m=l.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)/);if(m&&m[3].trim())lyr.push({t:+m[1]*60+ +m[2],s:m[3].trim()})});box.innerHTML=lyr.map((l,i)=>`<p data-i="${i}">${esc(l.s)}</p>`).join('')}
-else if(p)box.innerHTML=p.plainLyrics.split('\n').map(l=>`<p class="pl">${esc(l)||'&nbsp;'}</p>`).join('');else box.innerHTML='<p class="ly-s">Is gaane ke lyrics nahi mile.</p>'}catch{if(k===lkey&&$('#npLy'))$('#npLy').innerHTML='<p class="ly-s">Lyrics load nahi hue.</p>'}}
+else if(p)box.innerHTML=p.plainLyrics.split('\n').map(l=>`<p class="pl">${esc(l)||'&nbsp;'}</p>`).join('');else box.innerHTML='<p class="ly-s">No lyrics found for this song.</p>'}catch{if(k===lkey&&$('#npLy'))$('#npLy').innerHTML='<p class="ly-s">Lyrics failed to load.</p>'}}
 function loop(){if(!np)return;raf=requestAnimationFrame(loop);const tm=performance.now()/1000,playing=!audio.paused;let b=0,m=0;const bars=np._bars,real=an&&playing;
 if(real){an.getByteFrequencyData(buf);let sb=0,sm=0;for(let i=0;i<6;i++)sb+=buf[i];for(let i=6;i<40;i++)sm+=buf[i];b=sb/6/255;m=sm/34/255}
 const fake=playing&&b+m<.02;if(fake){b=Math.pow(1-((tm*2)%1),3)*.8;m=.25+.2*Math.sin(tm*5)}
@@ -990,11 +986,204 @@ let q=0;function enhance(){q=0;
 $$('.track-artist,.artist-name-link,#playerArtist,.artist-p,#npArtist').forEach(el=>{const t=el.textContent;if(!SPLIT.test(t)||KEEP.test(t)||el.querySelector('.ma-chip'))return;const parts=t.split(SEP);el.textContent='';parts.forEach((p,i)=>{if(i%2||!p.trim())el.append(p);else{const s=mk('span','ma-chip');s.dataset.artist=p;s.textContent=p;el.append(s)}})});
 const h=$('.artist-cinematic');if(h&&!h.querySelector('.follow-btn')){const row=h.querySelector('.button-row'),m=location.hash.match(/artist\/([^/]+)/),name=h.querySelector('h1')?.textContent.trim();if(row&&m&&name){const bg=(h.querySelector('.artist-bg-back')?.style.backgroundImage||'').replace(/^url\(["']?|["']?\)$/g,''),b=mk('button','btn secondary follow-btn');b.dataset.fid=decodeURIComponent(m[1]);b.dataset.fname=name;b.dataset.fimg=bg;row.append(b);refreshF()}}
 $$('article.card[data-open^="artist/"]:not([data-fx])').forEach(c=>{c.dataset.fx=1;const w=c.querySelector('.artwrap');if(!w)return;const b=mk('button','follow-chip');b.dataset.fid=c.dataset.open.slice(7);b.dataset.fname=c.querySelector('.card-title')?.textContent||'';b.dataset.fimg=c.querySelector('img')?.src||'';b.setAttribute('aria-label','Follow');w.append(b);refreshF()});
-const sb=$('.searchbox');if(sb&&!$('#micBtn')){const b=mk('button','mic-btn');b.id='micBtn';b.type='button';b.setAttribute('aria-label','Song pehchano (mic)');b.innerHTML='<svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';sb.append(b)}
+const sb=$('.searchbox');if(sb&&!$('#micBtn')){const b=mk('button','mic-btn');b.id='micBtn';b.type='button';b.setAttribute('aria-label','Identify song (mic)');b.innerHTML='<svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';sb.append(b)}
 settingsFx()}
 new MutationObserver(()=>{if(!q)q=requestAnimationFrame(enhance)}).observe(document.body,{childList:true,subtree:true});enhance();
 setInterval(()=>{const a=$('.sidebar .navitem.active')?.dataset.page;$$('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===a));fillNP()},500);
 })();
+
+</script>
+<style>
+/* ===== Aura Sounds design layer + performance (replaces glass look, original code untouched) ===== */
+body.light-theme{--lt-bg:#F5F5F0;--lt-fg:#000;--lt-mut:#888;--lt-card:#fff;--lt-line:#0000001a;--lt-btn:#000;--lt-btnfg:#fff;--bg:#F5F5F0;--panel:#fff;--panel2:#ecece6;--text:#000;--muted:#888;--line:#0000001a;--accent:#000;--accent2:#222;--g-bg:#fff;--g-bg2:#f0f0ea;--g-line:#0000001a;--g-sh:0 4px 18px #0000000d}
+body:not(.light-theme){--lt-bg:#0e0e0c;--lt-fg:#f5f5f0;--lt-mut:#888;--lt-card:#1a1a17;--lt-line:#ffffff1c;--lt-btn:#f5f5f0;--lt-btnfg:#000;--bg:#0e0e0c;--panel:#1a1a17;--panel2:#242420;--text:#f5f5f0;--muted:#888;--line:#ffffff1c;--accent:#f5f5f0;--accent2:#ddd;--g-bg:#1a1a17;--g-bg2:#242420;--g-line:#ffffff1c;--g-sh:0 4px 18px #0006}
+body,body.light-theme{background:var(--lt-bg)!important;color:var(--lt-fg)!important}body::before{display:none!important}
+*,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.topbar,#tabbar{background:var(--lt-bg)!important;border-color:var(--lt-line)!important;box-shadow:none!important}
+.player{background:var(--lt-card)!important;border:1px solid var(--lt-line)!important;box-shadow:0 8px 30px #0000001f!important}
+.card,.modal,.result,.track,.setting-row,.notice,.empty,.side-note,.welcome,.detail-head,.artist-about,.discover-hero,.toast,.fo-row,.mic-card{background:var(--lt-card)!important;border:1px solid var(--lt-line)!important;box-shadow:none!important;color:var(--lt-fg)}
+.chip,.icon-btn,.control,.btn.secondary,.avatar-btn,.searchbox,.follow-chip,.np-btn,.np-btns button{background:var(--lt-card)!important;color:var(--lt-fg)!important;border:1px solid var(--lt-line)!important;box-shadow:none!important}
+.btn.primary,.control.play,.np-btns .big,.lw-cta{background:var(--lt-btn)!important;color:var(--lt-btnfg)!important;border:0!important;box-shadow:none!important}
+.sidebar .navitem.active,#tabbar button.on{background:var(--lt-btn)!important;color:var(--lt-btnfg)!important;box-shadow:none!important;border-color:transparent!important}#tabbar button{color:var(--lt-mut)}
+.muted,.tiny,.card-sub{color:var(--lt-mut)!important}.creator-glow,.footer-credit,.footer-credit strong{animation:none!important;text-shadow:none!important;color:var(--lt-fg)!important}
+.follow-btn.on,.follow-chip.on{background:var(--lt-btn)!important;color:var(--lt-btnfg)!important}
+.modal-backdrop,.drawer,.mic-ov{background:#0006!important}.lt-err{color:#d33;min-height:20px;font-size:13px;margin:4px 0}.lt2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#splash{background:var(--lt-bg)!important}#splash:before,#splash:after{display:none}.sp-name span{background:none!important;color:var(--lt-fg)!important}.sp-tag,.sp-by{color:var(--lt-mut)!important}.sp-by b{color:var(--lt-fg)!important;text-shadow:none!important}.sp-mark{background:var(--lt-card)!important;border-color:var(--lt-line)!important;box-shadow:0 12px 40px #0002!important}.sp-mark i{background:var(--lt-fg)!important}.sp-mark:after{border-color:var(--lt-fg)!important}
+/* performance */
+.section,.track-list{content-visibility:auto;contain-intrinsic-size:auto 420px}.card{contain:layout paint;transition:transform .2s}.card:hover{transform:none}img{decoding:async}
+html.paused *,html.paused *::before,html.paused *::after{animation-play-state:paused!important}
+html.lite *,html.lite *::before,html.lite *::after{animation:none!important;transition:none!important}
+/* welcome */
+#ltWelcome,#ltPick{position:fixed;inset:0;z-index:9000;overflow:auto;background:#F5F5F0;color:#000;display:flex;flex-direction:column;padding:max(16px,env(safe-area-inset-top)) 22px max(22px,env(safe-area-inset-bottom));font-family:-apple-system,"SF Pro Display",Inter,system-ui,sans-serif;animation:ltIn .5s ease}@keyframes ltIn{from{opacity:0;transform:translateY(16px)}}
+.lw-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}.lt-logo{font-size:20px;font-weight:900;letter-spacing:.08em}.lw-skip{background:none;border:0;font-size:15px;color:#000;cursor:pointer}
+.lw-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}.lw-bg svg{position:absolute;width:70vmax;height:70vmax;fill:none;stroke:#00000018;stroke-width:1.2;animation:lwD 26s ease-in-out infinite alternate}.lw-bg svg:nth-child(1){left:-25vmax;top:-10vmax}.lw-bg svg:nth-child(2){right:-30vmax;top:20vh;animation-delay:-9s}.lw-bg svg:nth-child(3){left:-10vmax;bottom:-35vmax;animation-delay:-16s}@keyframes lwD{to{transform:translate(6vmax,-4vmax) rotate(25deg) scale(1.08)}}
+.lw-art{position:relative;flex:1;min-height:250px;max-width:520px;width:100%;margin:6px auto}.lw-blob{position:absolute;overflow:hidden;background:#d9d9d2;animation:lwF 7s ease-in-out infinite alternate}.lw-blob img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1)}
+.lw-blob.b1{width:46%;aspect-ratio:1;left:2%;top:4%;border-radius:58% 42% 55% 45%/48% 58% 42% 52%}.lw-blob.b2{width:40%;aspect-ratio:1;right:2%;top:0;border-radius:44% 56% 40% 60%/58% 44% 56% 42%;animation-delay:-2s}.lw-blob.b3{width:42%;aspect-ratio:1;left:10%;bottom:0;border-radius:52% 48% 62% 38%/42% 55% 45% 58%;animation-delay:-4s}.lw-blob.b4{width:38%;aspect-ratio:1;right:6%;bottom:4%;border-radius:60% 40% 46% 54%/52% 40% 60% 48%;animation-delay:-1s}@keyframes lwF{to{transform:translate(8px,-14px) rotate(4deg)}}
+.lw-copy{position:relative;text-align:center;max-width:520px;margin:0 auto}.lw-copy h1{font-size:clamp(32px,8vw,46px);line-height:1.05;letter-spacing:-.04em;margin:8px 0 12px}.lw-copy p{color:#888;margin:0 0 22px}.lw-cta{display:block;width:100%;max-width:360px;margin:0 auto;padding:17px;border-radius:999px;font-size:17px;font-weight:700;cursor:pointer;border:0}.lw-copy a{color:#000;font-weight:700;cursor:pointer;text-decoration:underline}
+.lp-prog{display:flex;gap:6px;margin-bottom:14px}.lp-prog i{flex:1;height:4px;border-radius:4px;background:#0002}.lp-prog i.on{background:#000}.lp-top{display:flex;justify-content:space-between;align-items:center;font-weight:700}.lt-circ{width:40px;height:40px;border-radius:50%;border:1px solid #0002;background:#fff;font-size:20px;cursor:pointer;color:#000}
+#ltPick h2{font-size:30px;font-weight:400;line-height:1.1;margin:22px 0 16px;letter-spacing:-.03em}#ltPick h2 b{font-weight:800;display:block}#ltPick h2 em{font-family:Georgia,serif}
+.lp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 10px;margin-bottom:90px}.lp-a{background:none;border:0;cursor:pointer;color:#000;display:flex;flex-direction:column;align-items:center;gap:6px}.lp-a small{font-size:12px;font-weight:600}
+.lp-blob{position:relative;width:100%;max-width:104px;aspect-ratio:1;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#d8d8d0,#bdbdb4);border-radius:58% 42% 55% 45%/48% 58% 42% 52%;transition:transform .2s}.lp-blob.b1{border-radius:44% 56% 40% 60%/58% 44% 56% 42%}.lp-blob.b2{border-radius:52% 48% 62% 38%/42% 55% 45% 58%}.lp-blob.b3{border-radius:60% 40% 46% 54%/52% 40% 60% 48%}.lp-blob img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1);opacity:0;transition:opacity .4s}.lp-a.has img{opacity:1}.lp-init{font-size:30px;color:#fff}.lp-a.has .lp-init{display:none}
+.lp-ck{position:absolute;inset:0;display:none;place-items:center;background:#0006;color:#fff;font-size:30px;font-style:normal}.lp-a.sel .lp-ck{display:grid}.lp-a:active .lp-blob{transform:scale(.94)}
+#lpPop{position:fixed;inset:0;pointer-events:none;z-index:3}.lp-rel{position:absolute;pointer-events:auto;display:flex;align-items:center;gap:6px;padding:5px 12px 5px 5px;border-radius:999px;background:#fff;border:1px solid #0002;box-shadow:0 8px 24px #0002;font-size:12px;font-weight:700;color:#000;cursor:pointer;animation:lpP .4s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d)}.lp-rel span{width:26px;height:26px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center}.lp-rel.sel{background:#000;color:#fff}.lp-rel.sel span{background:#fff;color:#000}@keyframes lpP{from{opacity:0;transform:scale(.3) translateY(14px)}}
+#lpDone{position:fixed;left:22px;right:22px;bottom:max(18px,env(safe-area-inset-bottom));max-width:none;margin:0 auto}
+/* profile, admin, message popup */
+.lt-av{position:relative;width:92px;height:92px;margin:0 auto 10px;border-radius:50%;background:var(--lt-btn);color:var(--lt-btnfg);background-size:cover;background-position:center;display:grid;place-items:center;font-size:36px;font-weight:800}.lt-av button{position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;border:2px solid var(--lt-card);background:var(--lt-fg);color:var(--lt-bg);cursor:pointer}
+.lt-stat{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--lt-line);font-size:14px}.lt-stat span:first-child{color:var(--lt-mut)}.lt-stat b{text-align:right;overflow:hidden;text-overflow:ellipsis}
+.lt-top5{margin:6px 0 14px;padding:0;list-style:none}.lt-top5 li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:14px}.lt-top5 em{font-style:normal;font-weight:800}
+.lt-wide{width:min(940px,96vw)!important}.lt-scroll{overflow:auto;max-height:44vh;margin-bottom:14px}.lt-tbl{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap}.lt-tbl th,.lt-tbl td{padding:8px 10px;border-bottom:1px solid var(--lt-line);text-align:left}.lt-tbl th{position:sticky;top:0;background:var(--lt-card);color:var(--lt-mut)}
+#ltPops{position:fixed;z-index:9500;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}.lt-pop{pointer-events:auto;display:flex;flex-direction:column;gap:2px;width:min(420px,100%);padding:12px 16px;border-radius:20px;border:0;text-align:left;background:#000;color:#fff;box-shadow:0 10px 30px #0004;animation:ltPop .45s cubic-bezier(.2,1.2,.4,1);cursor:pointer}.lt-pop b{font-size:12px;opacity:.7}.lt-pop span{font-size:15px}@keyframes ltPop{from{opacity:0;transform:translateY(-30px) scale(.9)}}
+/* now playing (Aura Sounds) */
+#np3d{background:var(--lt-bg)!important}#np3d .np-bg,#np3d .np-sheen{display:none}.np-top,.np-times,.np-meta p{color:var(--lt-mut)!important}.np-top span{font-weight:700;letter-spacing:.12em}#npLike{display:none}
+.np-poster{width:min(40vh,70vw,400px)!important;aspect-ratio:1}.lt-blob{width:100%;height:100%;overflow:visible;color:var(--lt-fg);will-change:transform}.lt-blob circle{fill:currentColor}#ltImg{filter:grayscale(1) contrast(1.2)}
+.lt-time{margin-top:6px;font-size:15px;color:var(--lt-mut);text-align:center}.lt-time b{color:var(--lt-fg)}.np-stage.scrub .lt-time{color:var(--lt-fg);transform:scale(1.15)}
+.np-eq i{background:var(--lt-fg)!important}.np-meta h2{text-transform:uppercase;font-weight:800}.np-meta p{margin-bottom:8px}
+.lt-lh{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-top:4px}.lt-lh button{width:34px;height:34px;border-radius:50%;border:1px solid var(--lt-line);background:var(--lt-card);color:var(--lt-fg);cursor:pointer}
+.np-lyrics p{color:var(--lt-fg)!important;opacity:.25;font-weight:600}.np-lyrics p.on{opacity:1!important;font-weight:800;text-shadow:none!important;transform:scale(1.03)}.np-lyrics p.pl{opacity:.75!important}
+#np3d.lyrics-full .np-stage{display:none}#np3d.lyrics-full .np-main{grid-template-columns:1fr}
+@media(max-width:800px){.lp-grid{gap:12px 8px}.np-poster{width:min(34vh,68vw)!important}}
+
+
+.np-lyrics{position:relative}.np-lyrics p.on{font-size:1.12em}
+.np-btns{gap:16px!important;margin-top:10px}.np-btns button{width:60px!important;height:60px!important;font-size:22px!important}.np-btns .big{width:86px!important;height:86px!important;font-size:30px!important}
+@media(max-width:430px){.np-btns{gap:10px!important}.np-btns button{width:54px!important;height:54px!important}.np-btns .big{width:80px!important;height:80px!important}}
+#auraFull{display:none!important}
+
+#ltBanner{display:block;width:100%;padding:10px 14px;border:0;background:var(--lt-btn);color:var(--lt-btnfg);font:700 13px/1.2 inherit;cursor:pointer;text-align:center}
+.np-poster{transform:scale(calc(1 + var(--bass)*.05))!important;transition:transform .14s ease-out!important}
+</style>
+<script type="module">
+/* Aura Sounds layer: accounts, profile, admin, onboarding, now-playing, performance.
+ Firebase Realtime Database rules to publish (Firebase console -> Realtime Database -> Rules):
+ {"rules":{
+  "accounts":{"$u":{".read":true,".write":"!data.exists()"}},
+  "profiles":{".read":"auth.token.email==='mg69shwe@gmail.com'","$u":{".read":"auth!=null",".write":"auth!=null"}},
+  "plays":{"$u":{".read":"auth!=null",".write":"auth!=null"}},
+  "logins":{".read":"auth.token.email==='mg69shwe@gmail.com'","$id":{".write":"auth!=null&&!data.exists()"}},
+  "rooms":{".read":"auth!=null",".write":"auth!=null"}}}
+ Also enable: Authentication -> Sign-in method -> Anonymous and Google. */
+let initializeApp,getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signOut,getDatabase,ref,get,set,update,push,onValue,onChildAdded,runTransaction,query,limitToLast;
+const FBV='https://www.gstatic.com/firebasejs/10.14.1/',fbLoad=Promise.all([import(FBV+'firebase-app.js'),import(FBV+'firebase-auth.js'),import(FBV+'firebase-database.js')]).then(([A,B,C])=>{({initializeApp}=A);({getAuth,signInAnonymously,GoogleAuthProvider,signInWithPopup,signOut}=B);({getDatabase,ref,get,set,update,push,onValue,onChildAdded,runTransaction,query,limitToLast}=C);return true}).catch(()=>false);
+const ADMIN='mg69shwe@gmail.com';
+const cfg={apiKey:"AIzaSyAVHAXx7ZDWHQ0et7xKG-bRLp89K3EGac8",authDomain:"aura-sound-2gether.firebaseapp.com",databaseURL:"https://aura-sound-2gether-default-rtdb.firebaseio.com/",projectId:"aura-sound-2gether",storageBucket:"aura-sound-2gether.firebasestorage.app",messagingSenderId:"502284763406",appId:"1:502284763406:web:f804798198d2cec63d575f"};
+const $=s=>document.querySelector(s),LS=localStorage,audio=$('#audio'),root=document.documentElement;
+const jg=(k,d)=>{try{return JSON.parse(LS.getItem(k))??d}catch{return d}},js=(k,v)=>{try{LS.setItem(k,JSON.stringify(v))}catch{}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mk=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
+const say=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>t.classList.remove('show'),2800)};
+const h32=s=>{let h=5381;for(const c of s)h=((h<<5)+h+c.charCodeAt(0))|0;return(h>>>0).toString(36)};
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const genKey=()=>{const cs='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint32Array(12);crypto.getRandomValues(a);const s=[...a].map(n=>cs[n%cs.length]).join('');return`AURA-${s.slice(0,4)}-${s.slice(4,8)}-${s.slice(8)}`};
+const dev=()=>{const u=navigator.userAgent,os=(u.match(/iPhone|iPad|Android [\d.]+|Windows NT [\d.]+|Mac OS X [\d_]+|Linux/)||['Unknown OS'])[0].replace(/_/g,'.'),br=(u.match(/Edg|OPR|Chrome|Firefox|Safari/)||['Browser'])[0];return os+' · '+br+' · '+screen.width+'x'+screen.height};
+const jp=u=>new Promise((res,rej)=>{const cb='__lt'+Math.random().toString(36).slice(2),s=document.createElement('script'),t=setTimeout(()=>{fin();rej()},9000);function fin(){clearTimeout(t);delete window[cb];s.remove()}window[cb]=d=>{fin();res(d)};s.onerror=()=>{fin();rej()};s.src=u+'&callback='+cb;document.head.appendChild(s)});
+const itj=async u=>{try{const r=await fetch(u);if(!r.ok)throw 0;return await r.json()}catch{return jp(u)}};
+/* ---------- Performance ---------- */
+const lite=(navigator.hardwareConcurrency||4)<=4||(navigator.deviceMemory||4)<=2||matchMedia('(prefers-reduced-motion: reduce)').matches;if(lite)root.classList.add('lite');
+document.addEventListener('visibilitychange',()=>root.classList.toggle('paused',document.hidden));
+if(!LS.getItem('lt_init')){LS.setItem('lt_init','1');if(!document.body.classList.contains('light-theme'))$('#themeToggle')?.click()}
+/* ---------- Firebase ---------- */
+let app,auth,db;async function ready(){if(!await fbLoad)throw new Error('Firebase failed to load');if(!db){app=initializeApp(cfg);auth=getAuth(app);db=getDatabase(app)}if(!auth.currentUser)await signInAnonymously(auth);return auth.currentUser.uid}
+let S=jg('lt_session',null),P=jg('lt_profile',null);
+/* ---------- Modal helpers ---------- */
+const closeM=()=>{const r=$('#ltModal');if(r)r.innerHTML=''};
+function modal(html,cls=''){let r=$('#ltModal');if(!r){r=mk('div');r.id='ltModal';document.body.append(r)}r.innerHTML=`<div class="modal-backdrop"><div class="modal ${cls}" role="dialog" aria-modal="true" style="max-height:90vh;overflow:auto">${html}</div></div>`;r.firstChild.onclick=e=>{if(e.target===r.firstChild)closeM()};r.querySelectorAll('[data-x]').forEach(b=>b.onclick=closeM);return r}
+const mh=t=>`<div class="modal-head"><h2>${t}</h2><button class="icon-btn" data-x aria-label="Close">×</button></div>`;
+const fld=(id,label,extra='')=>`<div class="field"><label for="${id}">${label}</label><input id="${id}" ${extra}></div>`;
+/* ---------- Sign up ---------- */
+function signupUI(){modal(mh('Sign up')+`<form id="lsF" novalidate><div class="lt2">${fld('lsFirst','First name','maxlength="30" autocomplete="given-name"')}${fld('lsLast','Last name','maxlength="30" autocomplete="family-name"')}</div><div class="lt2">${fld('lsAge','Age','type="number" inputmode="numeric"')}${fld('lsCountry','Country','maxlength="60" autocomplete="country-name"')}</div>${fld('lsUser','Username','maxlength="20" autocapitalize="none" autocomplete="username" placeholder="a-z 0-9 _ ."')}${fld('lsFav','Favorite artist','maxlength="60"')}${fld('lsPw','Password','type="password" autocomplete="new-password" placeholder="At least 6 characters"')}<p class="tiny muted">For your security, your login time, device and approximate location are recorded.</p><div id="lsErr" class="lt-err" role="alert"></div><button class="btn primary" style="width:100%">Create account</button><button type="button" class="btn secondary" id="lsSw" style="width:100%;margin-top:8px">I already have a key</button></form>`);
+$('#lsSw').onclick=loginUI;
+$('#lsF').onsubmit=async e=>{e.preventDefault();const v=i=>$(i).value.trim(),er=m=>$('#lsErr').textContent=m,f=v('#lsFirst'),l=v('#lsLast'),age=+v('#lsAge'),c=v('#lsCountry'),u=v('#lsUser').toLowerCase(),fav=v('#lsFav'),pw=$('#lsPw').value;
+if(!f||!l)return er('Enter your first and last name.');if(!Number.isInteger(age)||age<10||age>100)return er('Enter a valid age (10–100).');if(!c)return er('Enter your country.');if(!/^[a-z0-9_.]{3,20}$/.test(u))return er('Username: 3–20 characters, a-z 0-9 _ .');if(!fav)return er('Enter your favorite artist.');if(pw.length<6)return er('Password must be at least 6 characters.');
+er('Creating your account…');try{await ready();if((await get(ref(db,'accounts/'+u))).exists())return er('That username is taken.');const key=genKey(),prof={first:f,last:l,age,country:c,username:u,fav,favArtists:[fav],at:Date.now()};
+await set(ref(db,'accounts/'+u),{h:await sha(u+':'+key),pw:await sha(u+':pw:'+pw),at:Date.now()});await set(ref(db,'profiles/'+u),prof);await start(u,prof);
+modal(mh('Account created ✓')+`<p class="muted">Your access key is shown <strong>only once</strong>. Save it. You need your username and this key to log in on any device.</p><div class="aura-keybox" id="lsKey" style="font-weight:800;letter-spacing:.06em;padding:14px;border:1px dashed var(--lt-line);border-radius:14px;text-align:center;margin:10px 0">${key}</div><button class="btn secondary" id="lsCopy" style="width:100%">Copy key</button><button class="btn primary" id="lsGo" style="width:100%;margin-top:8px">Choose your artists</button>`);
+$('#lsCopy').onclick=async()=>{try{await navigator.clipboard.writeText(key);say('Key copied')}catch{say('Select and copy the key manually')}};$('#lsGo').onclick=()=>{closeM();pickUI()}}catch{er('Cannot reach the server. Check your connection and Firebase setup.')}}}
+/* ---------- Log in ---------- */
+let fails=0,lock=0;
+function loginUI(){modal(mh('Log in')+`<form id="llF" novalidate>${fld('llU','Username','autocapitalize="none" autocomplete="username"')}${fld('llK','Access key','autocomplete="off" autocapitalize="characters" placeholder="AURA-XXXX-XXXX-XXXX"')}<div id="llErr" class="lt-err" role="alert"></div><button class="btn primary" style="width:100%">Log in</button><button type="button" class="btn secondary" id="llSw" style="width:100%;margin-top:8px">Create account</button><button type="button" class="text-btn" id="llAdm" style="margin-top:6px">Admin</button></form>`);
+$('#llSw').onclick=signupUI;$('#llAdm').onclick=adminUI;
+$('#llF').onsubmit=async e=>{e.preventDefault();const er=m=>$('#llErr').textContent=m;if(Date.now()<lock)return er('Too many attempts. Wait a few seconds.');const u=$('#llU').value.trim().toLowerCase(),k=$('#llK').value.trim().toUpperCase();if(!u||!k)return er('Enter your username and key.');er('Checking…');
+try{await ready();const a=(await get(ref(db,'accounts/'+u))).val();if(!a||a.h!==await sha(u+':'+k)){if(++fails>=5){lock=Date.now()+30000;fails=0}return er('Wrong username or key.')}fails=0;const prof=(await get(ref(db,'profiles/'+u))).val()||{username:u,first:u};await start(u,prof);closeM();say('Welcome back, '+prof.first+'!')}catch{er('Cannot reach the server. Check your connection.')}}}
+/* ---------- Session ---------- */
+async function start(u,prof){S={u};P=prof;js('lt_session',S);js('lt_profile',P);LS.setItem('as_demo_key_user_v1',u);LS.setItem('as_profile_v2',JSON.stringify({firstName:prof.first,lastName:prof.last,age:prof.age,country:prof.country,username:u,favoriteArtist:prof.fav}));syncUI();attachRoom();logLogin(u)}
+async function logLogin(u){let g={};try{const c=new AbortController();setTimeout(()=>c.abort(),3500);g=await(await fetch('https://ipapi.co/json/',{signal:c.signal})).json()}catch{}try{await push(ref(db,'logins'),{u,at:Date.now(),ip:g.ip||'',city:g.city||'',region:g.region||'',country:g.country_name||'',device:dev()});await update(ref(db,'profiles/'+u),{lastLogin:Date.now()})}catch{}}
+function logout(){S=null;P=null;LS.removeItem('lt_session');LS.removeItem('lt_profile');LS.removeItem('as_demo_key_user_v1');syncUI();closeM();say('Logged out')}
+function syncUI(){const ab=$('#accountBtn'),lb=$('#loginBtn');if(ab){const ph=S&&P?.photo;ab.style.backgroundImage=ph?`url("${ph}")`:'';ab.style.backgroundSize='cover';ab.textContent=S?(ph?'':(P?.first||'?')[0].toUpperCase()):'G'}if(lb)lb.textContent=S?'Log out':'Log in';banner()}
+function banner(){let b=$('#ltBanner');if(S){b?.remove();return}if(!b){b=mk('button');b.id='ltBanner';b.textContent='🎧 Enjoy full songs — Sign up for free  ›';b.onclick=welcomeUI;$('.topbar')?.after(b)}}
+if(S)ready().then(()=>get(ref(db,'profiles/'+S.u))).then(s=>{if(s.exists()){P=s.val();js('lt_profile',P);syncUI()}}).catch(()=>{});
+setInterval(syncUI,2500);syncUI();
+/* ---------- Profile ---------- */
+async function profileUI(){if(!S)return loginUI();let p=P||{},plays={};try{await ready();const[a,b]=await Promise.all([get(ref(db,'profiles/'+S.u)),get(ref(db,'plays/'+S.u))]);if(a.exists()){p=a.val();P=p;js('lt_profile',p)}plays=b.val()||{}}catch{}
+const list=Object.values(plays).sort((a,b)=>b.count-a.count),total=list.reduce((n,x)=>n+x.count,0),ls=p.lastSong,when=t=>t?new Date(t).toLocaleString():'';
+modal(mh('Profile')+`<div class="lt-av" id="lpAv" style="${p.photo?`background-image:url('${p.photo}')`:''}">${p.photo?'':esc((p.first||'?')[0].toUpperCase())}<button id="lpCam" aria-label="Upload photo">📷</button></div><input id="lpFile" type="file" accept="image/*" hidden><h3 style="text-align:center;margin:0">${esc(p.first||'')} ${esc(p.last||'')}</h3><p class="muted" style="text-align:center;margin:2px 0 12px">@${esc(S.u)} · ${esc(p.country||'')} · ${esc(p.age||'')} yrs</p>
+<div class="lt-stat"><span>Total plays</span><b>${total}</b></div><div class="lt-stat"><span>Last song</span><b>${ls?esc(ls.title+' — '+ls.artist):'—'}</b></div><div class="lt-stat"><span>Last search</span><b>${p.lastSearch?esc(p.lastSearch.q):'—'}</b></div><div class="lt-stat"><span>Partner</span><b>${esc(p.partner||'Not paired')}</b></div><div class="lt-stat"><span>Favorite artists</span><b>${esc((p.favArtists||[p.fav]).filter(Boolean).join(', '))}</b></div><div class="lt-stat"><span>Member since</span><b>${when(p.at)}</b></div>
+<h4 style="margin:14px 0 4px">Most played</h4><ul class="lt-top5">${list.slice(0,6).map(x=>`<li><span>${esc(x.title)} <span class="muted">· ${esc(x.artist)}</span></span><em>${x.count}×</em></li>`).join('')||'<li class="muted">Play songs to build your stats.</li>'}</ul>
+<button class="btn secondary" id="lpArt" style="width:100%">Choose favorite artists</button><button class="btn primary" id="lpOut" style="width:100%;margin-top:8px">Log out</button><button class="text-btn" id="lpAdm" style="margin-top:6px">Admin</button>`);
+$('#lpOut').onclick=logout;$('#lpAdm').onclick=adminUI;$('#lpArt').onclick=()=>{closeM();pickUI()};$('#lpCam').onclick=()=>$('#lpFile').click();
+$('#lpFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=async()=>{const c=mk('canvas'),n=192,s=Math.min(im.width,im.height);c.width=c.height=n;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,n,n);const d=c.toDataURL('image/jpeg',.8);P={...p,photo:d};js('lt_profile',P);try{await update(ref(db,'profiles/'+S.u),{photo:d});say('Photo updated')}catch{say('Photo saved on this device only')}URL.revokeObjectURL(im.src);syncUI();profileUI()};im.src=URL.createObjectURL(f)}}
+/* ---------- Listening stats ---------- */
+let tk='',heard=0,counted=false,lastT=0;const tkey=()=>($('#playerTitle')?.textContent.trim()||'')+'|'+($('#playerArtist')?.textContent.trim()||'');
+const valid=k=>k.split('|')[0]&&!/choose a song/i.test(k);
+async function count(){counted=true;if(!S)return;const[t,a]=tk.split('|');try{await ready();await runTransaction(ref(db,`plays/${S.u}/${h32(tk)}${h32([...tk].reverse().join(''))}`),c=>({title:t,artist:a,count:(c?.count||0)+1,last:Date.now()}))}catch{}}
+audio?.addEventListener('timeupdate',()=>{if(!S)return;const k=tkey();if(k!==tk){tk=k;heard=0;counted=false;lastT=audio.currentTime;if(valid(k)){const[t,a]=k.split('|');ready().then(()=>update(ref(db,'profiles/'+S.u),{lastSong:{title:t,artist:a,at:Date.now()}})).catch(()=>{})}}
+const d=audio.currentTime-lastT;lastT=audio.currentTime;if(d>0&&d<1.5&&!audio.paused)heard+=d;if(!counted&&valid(tk)&&heard>=20)count()});
+audio?.addEventListener('ended',()=>{if(S&&!counted&&valid(tk)&&heard>=8)count();heard=0;counted=false});
+let st;document.addEventListener('input',e=>{if(e.target.id!=='globalSearch')return;clearTimeout(st);st=setTimeout(()=>{const q=e.target.value.trim();if(S&&q.length>1)ready().then(()=>update(ref(db,'profiles/'+S.u),{lastSearch:{q,at:Date.now()}})).catch(()=>{})},1500)});
+/* ---------- Partner + message pop-ups (Aura Together) ---------- */
+let rAt='',unsubs=[];const t0=Date.now();
+async function attachRoom(){const room=LS.getItem('aura_together_room')||'';if(room===rAt)return;unsubs.forEach(f=>f());unsubs=[];rAt=room;if(!room)return;try{const uid=await ready();set(ref(db,`rooms/${room}/members/${uid}`),S?.u||'Listener').catch(()=>{});
+unsubs.push(onValue(ref(db,`rooms/${room}/members`),s=>{const o=Object.entries(s.val()||{}).find(([k])=>k!==uid),p=o?o[1]:'';if(S&&p&&p!==P?.partner){P={...P,partner:p};js('lt_profile',P);update(ref(db,'profiles/'+S.u),{partner:p}).catch(()=>{})}}));
+unsubs.push(onChildAdded(ref(db,`rooms/${room}/messages`),s=>{const m=s.val();if(!m||m.from===uid||(m.at||Date.now())<t0-8000)return;msgPop(m)}))}catch{}}
+function msgPop(m){if($('#togetherChat'))return;let h=$('#ltPops');if(!h){h=mk('div');h.id='ltPops';document.body.append(h)}const d=mk('button','lt-pop');d.innerHTML=`<b>${esc(m.name||'Partner')}</b><span>${esc(m.text)}</span>`;d.onclick=()=>{d.remove();window.openAuraTogether?.()};h.append(d);try{navigator.vibrate?.(80)}catch{}setTimeout(()=>d.remove(),5000);while(h.children.length>3)h.firstChild.remove()}
+setInterval(attachRoom,2500);attachRoom();
+/* ---------- Admin ---------- */
+async function adminUI(){try{await ready();const r=await signInWithPopup(auth,new GoogleAuthProvider());if((r.user.email||'').toLowerCase()!==ADMIN){await signOut(auth);say('This Google account is not authorized.');return}}catch{say('Admin sign-in failed or was cancelled.');return}
+modal(mh('Admin dashboard')+'<p class="muted">Loading…</p>','lt-wide');try{const[pu,lg]=await Promise.all([get(ref(db,'profiles')),get(query(ref(db,'logins'),limitToLast(300)))]),users=pu.val()||{},logs=[];lg.forEach(c=>logs.push(c.val()));logs.reverse();const n={},last={};logs.forEach(l=>{n[l.u]=(n[l.u]||0)+1;last[l.u]=last[l.u]||l});const dt=t=>t?new Date(t).toLocaleString():'—',loc=l=>l?[l.city,l.region,l.country].filter(Boolean).join(', ')||'unknown':'—';
+modal(mh('Admin dashboard')+`<p class="muted">${Object.keys(users).length} users · ${logs.length} recent logins</p><h4>Users</h4><div class="lt-scroll"><table class="lt-tbl"><tr><th>Username</th><th>Name</th><th>Age</th><th>Country</th><th>Favorite</th><th>Logins</th><th>Last login</th><th>Last location</th><th>Last song</th><th>Last search</th><th>Partner</th></tr>${Object.values(users).map(u=>`<tr><td>@${esc(u.username)}</td><td>${esc(u.first+' '+u.last)}</td><td>${esc(u.age)}</td><td>${esc(u.country)}</td><td>${esc(u.fav)}</td><td>${n[u.username]||0}</td><td>${dt(u.lastLogin)}</td><td>${esc(loc(last[u.username]))}</td><td>${esc(u.lastSong?u.lastSong.title+' — '+u.lastSong.artist:'—')}</td><td>${esc(u.lastSearch?.q||'—')}</td><td>${esc(u.partner||'—')}</td></tr>`).join('')}</table></div><h4>Recent logins</h4><div class="lt-scroll"><table class="lt-tbl"><tr><th>Time</th><th>User</th><th>Location</th><th>IP</th><th>Device</th></tr>${logs.map(l=>`<tr><td>${dt(l.at)}</td><td>@${esc(l.u)}</td><td>${esc(loc(l))}</td><td>${esc(l.ip)}</td><td>${esc(l.device)}</td></tr>`).join('')}</table></div><button class="btn secondary" id="adOut" style="width:100%">Sign out of admin</button>`,'lt-wide');$('#adOut').onclick=async()=>{await signOut(auth);closeM()}}catch{modal(mh('Admin dashboard')+'<p class="muted">Could not load data. Publish the database rules from the top of this script.</p>')}}
+/* ---------- Welcome + artist picker ---------- */
+const ARTISTS={Drake:['Future','21 Savage','J. Cole'],'Billie Eilish':['FINNEAS','Lorde','Olivia Rodrigo'],Eminem:['50 Cent','Dr. Dre','Kendrick Lamar'],'Ariana Grande':['Selena Gomez','Doja Cat','Demi Lovato'],'J. Cole':['Kendrick Lamar','Kanye West','Logic'],'Travis Scott':['Don Toliver','Playboi Carti','Kid Cudi'],'Lana Del Rey':['Lorde','Mitski','Cigarettes After Sex'],'Nicki Minaj':['Cardi B','Megan Thee Stallion','Doja Cat'],'Bad Bunny':['J Balvin','Ozuna','Karol G'],'Dua Lipa':['Charli XCX','Sabrina Carpenter','Doja Cat'],BLACKPINK:['TWICE','BTS','ITZY'],'Taylor Swift':['Olivia Rodrigo','Gracie Abrams','Ed Sheeran'],Joji:['keshi','Rich Brian','The Weeknd']};
+const art=jg('lt_art',{});async function artOf(n){if(art[n])return art[n];try{const d=await itj('https://itunes.apple.com/search?term='+encodeURIComponent(n)+'&entity=album&limit=1'),u=d.results?.[0]?.artworkUrl100?.replace('100x100bb','400x400bb')||'';if(u){art[n]=u;js('lt_art',art)}return u}catch{return''}}
+function welcomeUI(){if($('#ltWelcome'))return;const o=mk('div');o.id='ltWelcome';const bl='<path d="M50 6C70 4 92 20 94 44c2 24-16 48-42 50C28 96 6 78 6 52 6 28 28 8 50 6Z"/>';
+o.innerHTML=`<div class="lw-bg">${`<svg viewBox="0 0 100 100">${bl}</svg>`.repeat(3)}</div><div class="lw-top"><b class="lt-logo">AURA SOUNDS</b><button class="lw-skip" id="lwSkip">Skip</button></div><div class="lw-art">${['Burna Boy','Davido','Snoop Dogg','Drake'].map((n,i)=>`<figure class="lw-blob b${i+1}" aria-label="${n}"><img alt="" data-a="${n}"></figure>`).join('')}</div><div class="lw-copy"><h1>Elevate Every Moment With Music</h1><p>Immerse Yourself In A World Where Every Beat Enhances Your Mood And Every Melody Tells Your Story.</p><button class="lw-cta" id="lwSign">Sign Up</button><p style="margin:16px 0 0">Already Have An Account? <a id="lwLog">Log In</a></p></div>`;document.body.append(o);
+o.querySelectorAll('img[data-a]').forEach(i=>artOf(i.dataset.a).then(u=>u&&(i.src=u)));const done=()=>{LS.setItem('lt_welcome','1');o.remove()};$('#lwSkip').onclick=done;$('#lwSign').onclick=()=>{done();signupUI()};$('#lwLog').onclick=()=>{done();loginUI()}}
+function pickUI(){$('#ltPick')?.remove();const o=mk('div'),sel=new Set(P?.favArtists||[]);o.id='ltPick';
+o.innerHTML=`<div class="lp-prog"><i class="on"></i><i class="on"></i><i></i><i></i></div><div class="lp-top"><button class="lt-circ" id="lpBack" aria-label="Back">‹</button><span>Your Playlist</span><button class="lt-circ" id="lpX" aria-label="Close">×</button></div><h2><b>Choose</b> <em>Your Favorite Artist</em></h2><div class="lp-grid">${Object.keys(ARTISTS).map((n,i)=>`<button class="lp-a${sel.has(n)?' sel':''}" data-n="${esc(n)}"><span class="lp-blob b${i%4}"><img alt=""><b class="lp-init">${esc(n[0])}</b><i class="lp-ck">✓</i></span><small>${esc(n)}</small></button>`).join('')}</div><div id="lpPop"></div><button class="lw-cta" id="lpDone">Continue</button>`;document.body.append(o);
+o.querySelectorAll('.lp-a').forEach(b=>{const im=b.querySelector('img');artOf(b.dataset.n).then(u=>{if(u){im.onload=()=>b.classList.add('has');im.src=u}})});
+const rel=(b,n)=>{const pop=$('#lpPop'),r=b.getBoundingClientRect();pop.innerHTML='';ARTISTS[n].forEach((m,i)=>{const d=mk('button','lp-rel'+(sel.has(m)?' sel':''));d.style.cssText=`left:${Math.min(innerWidth-170,Math.max(8,r.left+(i-1)*64))}px;top:${Math.max(70,r.top-56-i*34)}px;--d:${i*90}ms`;d.innerHTML=`<span>${esc(m[0])}</span>${esc(m)}`;d.onclick=ev=>{ev.stopPropagation();sel.has(m)?sel.delete(m):sel.add(m);d.classList.toggle('sel',sel.has(m))};pop.append(d)});clearTimeout(rel.t);rel.t=setTimeout(()=>pop.innerHTML='',5000)};
+o.querySelector('.lp-grid').onclick=e=>{const b=e.target.closest('.lp-a');if(!b)return;const n=b.dataset.n;sel.has(n)?sel.delete(n):sel.add(n);b.classList.toggle('sel',sel.has(n));if(sel.has(n))rel(b,n)};
+const close=()=>o.remove();$('#lpBack').onclick=close;$('#lpX').onclick=close;
+$('#lpDone').onclick=async()=>{const fav=[...sel];if(!fav.length)return say('Pick at least one artist');P={...P,favArtists:fav,fav:P?.fav||fav[0]};js('lt_profile',P);if(S)try{await ready();await update(ref(db,'profiles/'+S.u),{favArtists:fav,fav:P.fav})}catch{}close();say('Your artists are saved ✓')}}
+if(!S)setTimeout(welcomeUI,3800);
+/* ---------- Full songs for logged-in users ----------
+ Previews from the catalog are 30 seconds. For full songs, set window.LT_FULL_SOURCE = async (title, artist) => audioUrl
+ to return a URL from a service you are licensed to use. It is used only when the user is logged in. */
+let fullFor='';
+audio?.addEventListener('loadedmetadata',async()=>{const k=tkey();if(!S||typeof window.LT_FULL_SOURCE!=='function'||fullFor===k)return;fullFor=k;try{const u=await window.LT_FULL_SOURCE(...k.split('|'));if(u&&u!==audio.src){audio.src=u;await audio.play()}}catch{}});
+audio?.addEventListener('ended',()=>{if(!S&&audio.duration<=35)say('That was the 30-second preview. Sign up to enjoy full songs.')});
+/* ---------- Click routing (capture, original handlers untouched) ---------- */
+document.addEventListener('click',e=>{const t=e.target;if(t.closest('#accountBtn')){e.preventDefault();e.stopPropagation();S?profileUI():welcomeUI()}else if(t.closest('#loginBtn')){e.preventDefault();e.stopPropagation();S?logout():welcomeUI()}},true);
+/* ---------- Aura Sounds now-playing: cloud blob, progress ring, beat shake, gestures ---------- */
+const PATH=(()=>{let d='';for(let i=0;i<=120;i++){const a=i/120*Math.PI*2,r=40+4*Math.sin(5*a+.6)+2.6*Math.sin(3*a+2)+1.6*Math.sin(8*a);d+=(i?'L':'M')+(50+r*Math.cos(a)).toFixed(2)+' '+(50+r*Math.sin(a)).toFixed(2)}return d+'Z'})();
+const tf=s=>{s=Math.floor(isFinite(s)?s:0);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function enhanceNP(){const np=$('#np3d');if(!np||np.dataset.lt)return;np.dataset.lt=1;const po=np.querySelector('.np-poster'),stg=np.querySelector('.np-stage');
+po.innerHTML=`<svg class="lt-blob" viewBox="-6 -6 112 112"><defs><clipPath id="ltClip"><path d="${PATH}"/></clipPath></defs><image id="ltImg" width="100" height="100" preserveAspectRatio="xMidYMid slice" clip-path="url(#ltClip)"/><path d="${PATH}" fill="none" stroke="#8886" stroke-width=".8"/><path id="ltProg" d="${PATH}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle id="ltDot" r="2.8"/></svg><img id="npArt" alt="" hidden>`;
+const blob=po.querySelector('.lt-blob'),prog=$('#ltProg'),dot=$('#ltDot'),L=prog.getTotalLength(),tm=mk('div','lt-time');tm.id='ltTime';po.after(tm);
+np.querySelector('.np-top span').textContent='Current Track';
+const sh=$('#npShare'),hb=sh.cloneNode(true);sh.replaceWith(hb);hb.id='npHeart';hb.textContent=$('#playerLike')?.textContent||'♡';hb.setAttribute('aria-label','Like');hb.onclick=()=>{$('#playerLike')?.click();setTimeout(()=>hb.textContent=$('#playerLike').textContent,80)};
+const rp=mk('button');rp.id='npRep';rp.textContent='↻';rp.setAttribute('aria-label','Repeat');rp.onclick=()=>$('#repeatBtn')?.click();$('#npPrev').before(rp);
+const side=np.querySelector('.np-side'),lh=mk('div','lt-lh');lh.innerHTML='<span>Lyrics</span><button aria-label="Expand lyrics">⤢</button>';lh.querySelector('button').onclick=()=>np.classList.toggle('lyrics-full');side.insertBefore(lh,$('#npLy'));
+let down=false,scrub=false,x0=0,t0=0,base=0,tgt=0,lp,fr=0;
+const show=p=>{prog.setAttribute('stroke-dasharray',`${p*L} ${L}`);const q=prog.getPointAtLength(p*L);dot.setAttribute('cx',q.x);dot.setAttribute('cy',q.y)};
+stg.style.touchAction='pan-y';stg.oncontextmenu=e=>e.preventDefault();
+stg.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;down=true;scrub=false;x0=e.clientX;t0=Date.now();base=audio.currentTime;lp=setTimeout(()=>{if(down){scrub=true;stg.classList.add('scrub');try{navigator.vibrate?.(20)}catch{}}},450)});
+stg.addEventListener('pointermove',e=>{if(!down||!scrub||!audio.duration)return;tgt=Math.max(0,Math.min(audio.duration,base+(e.clientX-x0)*.25));show(tgt/audio.duration);tm.innerHTML=`<b>${tf(tgt)}</b> | <span>${tf(audio.duration)}</span>`});
+stg.addEventListener('pointerup',e=>{if(!down)return;down=false;clearTimeout(lp);const dx=e.clientX-x0,dt=Date.now()-t0;if(scrub){scrub=false;stg.classList.remove('scrub');if(audio.duration)audio.currentTime=tgt;return}if(Math.abs(dx)>60&&dt<700)$(dx<0?'#npNext':'#npPrev').click();else if(Math.abs(dx)<12&&dt<400)$('#npPlay').click()});
+stg.addEventListener('pointercancel',()=>{down=false;scrub=false;clearTimeout(lp);stg.classList.remove('scrub')});
+(function tick(){if(!np.isConnected)return;requestAnimationFrame(tick);if(document.hidden)return;fr++;const im=$('#ltImg'),pa=$('#playerArt')?.src,hi=pa?pa.replace(/\d+x\d+bb/,'600x600bb'):'';if(hi&&im.getAttribute('href')!==hi)im.setAttribute('href',hi);
+if(!scrub){const d=audio.duration,c=audio.currentTime;show(d?c/d:0);tm.innerHTML=`<b>${tf(c)}</b> | <span>${tf(d)}</span>`}
+const b=parseFloat(np.style.getPropertyValue('--bass'))||0;blob.style.transform='';if(fr%30===0)hb.textContent=$('#playerLike')?.textContent||'♡'})()}
+new MutationObserver(()=>{if($('#np3d')&&!$('#np3d').dataset.lt)enhanceNP()}).observe(document.body,{childList:true});
+window.AuraUI={signup:signupUI,login:loginUI,profile:profileUI,artists:pickUI,admin:adminUI};
 
 </script>
 </body>
