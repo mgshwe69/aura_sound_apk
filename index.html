@@ -456,7 +456,7 @@ async function ready(){if(!configReady){notify('Firebase setup is required for t
 function connectRoom(code){if(!db||!uid){renderSetup();return}if(roomUnsub)roomUnsub();if(msgUnsub)msgUnsub();if(musicUnsub)musicUnsub();$('#togetherSetup').hidden=true;$('#togetherLive').hidden=false;$('#togetherPairStatus').textContent='Connecting…';
 roomUnsub=onValue(ref(db,'rooms/'+code),snap=>{if(!snap.exists()){$('#togetherPairStatus').textContent='Partner room not found. Check the key.';return}roomData=snap.val();const paired=!!roomData.partner&&roomData.partner!==roomData.owner;$('#togetherPairStatus').textContent=paired?'💞 Connected — you are listening together.':'Key ready: '+code+' · Waiting for your partner to enter it.';$('#togetherCopyKey').textContent='Key: '+code;if(paired){vibrate([100,60,100,60,240]);document.querySelector('.together-heart')?.classList.add('together-pulse');} });
 musicUnsub=onValue(ref(db,'rooms/'+code+'/music'),async snap=>{const m=snap.val();if(!m||m.by===uid||m.stamp===lastRemoteStamp)return;lastRemoteStamp=m.stamp;applyingRemote=true;try{if(m.src&&audio.src!==m.src){audio.src=m.src;await new Promise(resolve=>{audio.addEventListener('loadedmetadata',resolve,{once:true});setTimeout(resolve,2200)});$('#playerTitle').textContent=m.title||'Partner is playing';$('#playerArtist').textContent=m.artist||'Aura Together';}if(Number.isFinite(m.time)&&audio.readyState>=1&&Math.abs(audio.currentTime-m.time)>3)audio.currentTime=m.time;if(m.paused||m.action==='pause')audio.pause();else if(m.action==='play'||m.action==='seek'||m.action==='time'){try{await audio.play()}catch{notify('Tap Play once on this device to allow synced playback.')}}}catch(e){console.warn('Aura Together sync:',e)}finally{setTimeout(()=>applyingRemote=false,300)}});
-msgUnsub=onValue(ref(db,'rooms/'+code+'/messages'),snap=>{const chat=$('#togetherChat');if(!chat)return;const list=[];snap.forEach(child=>list.push({id:child.key,...child.val()}));chat.innerHTML=list.slice(-100).map(m=>`<div class="together-msg ${m.from===uid?'mine':''}"><strong>${esc(m.name||'Partner')}</strong><div>${esc(m.text)}</div><small>${m.from===uid?'You':'Partner'}</small></div>`).join('');chat.scrollTop=chat.scrollHeight;});
+msgUnsub=window.AuraChat?window.AuraChat.open(code,uid):onValue(ref(db,'rooms/'+code+'/messages'),snap=>{const chat=$('#togetherChat');if(!chat)return;const list=[];snap.forEach(child=>list.push({id:child.key,...child.val()}));chat.innerHTML=list.slice(-100).map(m=>`<div class="together-msg ${m.from===uid?'mine':''}"><strong>${esc(m.name||'Partner')}</strong><div>${esc(m.text)}</div><small>${m.from===uid?'You':'Partner'}</small></div>`).join('');chat.scrollTop=chat.scrollHeight;});
 $('#togetherCopyKey').onclick=async()=>{try{await navigator.clipboard.writeText(code);notify('Partner key copied. Send it privately.')}catch{notify('Your partner key is '+code)}};
 $('#togetherSendForm').onsubmit=async e=>{e.preventDefault();const input=$('#togetherMessage');const text=input.value.trim();if(!text||!db)return;input.value='';try{await push(ref(db,'rooms/'+code+'/messages'),{from:uid,name:localStorage.getItem('as_demo_key_user_v1')||'Listener',text,at:serverTimestamp()})}catch{notify('Message did not send. Check your connection.')}};
 $('#togetherUnpair').onclick=()=>{if(roomUnsub)roomUnsub();if(msgUnsub)msgUnsub();roomCode='';roomData=null;localStorage.removeItem('aura_together_room');$('#togetherLive').hidden=true;$('#togetherSetup').hidden=false;renderSetup();};
@@ -1185,6 +1185,119 @@ if(!scrub){const d=audio.duration,c=audio.currentTime;show(d?c/d:0);tm.innerHTML
 const b=parseFloat(np.style.getPropertyValue('--bass'))||0;blob.style.transform='';if(fr%30===0)hb.textContent=$('#playerLike')?.textContent||'♡'})()}
 new MutationObserver(()=>{if($('#np3d')&&!$('#np3d').dataset.lt)enhanceNP()}).observe(document.body,{childList:true});
 window.AuraUI={signup:signupUI,login:loginUI,profile:profileUI,artists:pickUI,admin:adminUI};
+
+</script>
+<style>
+/* ===== Aura Together chat (WhatsApp-style, no calls) ===== */
+.ac-wrap{--wa-bg:#efeae2;--wa-me:#d9fdd3;--wa-th:#fff;--wa-tx:#111b21;--wa-hd:#f0f2f5;--wa-mu:#667781;position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--lt-line,#0001);background:var(--wa-bg);margin:8px 0 10px}
+body:not(.light-theme) .ac-wrap{--wa-bg:#0b141a;--wa-me:#005c4b;--wa-th:#202c33;--wa-tx:#e9edef;--wa-hd:#202c33;--wa-mu:#8696a0}
+.ac-head{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--wa-hd);color:var(--wa-tx)}
+.ac-couple{display:flex;align-items:center;gap:2px;perspective:420px}.ac-av{position:relative;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:15px;animation:acSway 4s ease-in-out infinite alternate}
+.ac-av.me{background:linear-gradient(145deg,#8b6dff,#4b3ad8)}.ac-av.th{background:linear-gradient(145deg,#ff7ab8,#d63a8a);animation-delay:-2s}.ac-av.on:after{content:"";position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#25d366;border:2px solid var(--wa-hd)}
+.ac-ht{font-size:18px;animation:acHb .8s ease-in-out infinite alternate}@keyframes acSway{from{transform:rotateY(-24deg)}to{transform:rotateY(24deg)}}@keyframes acHb{to{transform:scale(1.28)}}
+.ac-who{flex:1;min-width:0;display:flex;flex-direction:column}.ac-who b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ac-who small{font-size:12px;color:var(--wa-mu)}
+.ac-bell{border:0;background:none;font-size:18px;cursor:pointer;padding:6px}
+#togetherChat.ac-chat{height:min(50vh,440px);overflow-y:auto;overscroll-behavior:contain;padding:8px 10px 6px;background:var(--wa-bg) radial-gradient(#0000000a 1px,transparent 1.5px) 0 0/18px 18px!important;border:0!important;border-radius:0!important;display:block!important;scroll-behavior:auto}
+.ac-day{text-align:center;margin:8px 0 6px}.ac-day span{background:var(--wa-th);color:var(--wa-mu);padding:3px 10px;border-radius:8px;font-size:12px;box-shadow:0 1px .5px #0002}
+.ac-row{display:flex;margin:2px 0}.ac-row.mine{justify-content:flex-end}.ac-row.first{margin-top:7px}
+.ac-b{position:relative;max-width:82%;padding:6px 8px 4px 9px;border-radius:10px;background:var(--wa-th);color:var(--wa-tx);box-shadow:0 1px .5px #0002;font-size:14.5px;line-height:1.35;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
+.mine .ac-b{background:var(--wa-me)}.first.mine .ac-b{border-top-right-radius:2px}.first.their .ac-b{border-top-left-radius:2px}.ac-b a{color:#027eb5}
+.ac-m{float:right;margin:7px 0 -3px 10px;font-size:11px;color:var(--wa-mu);display:inline-flex;gap:3px;align-items:center;white-space:nowrap}.tk{font-style:normal;color:#8696a0;letter-spacing:-2px}.tk.r{color:#53bdeb}
+.ac-more{text-align:center;font-size:12px;color:var(--wa-mu);padding:6px}.ac-empty{text-align:center;color:var(--wa-mu);font-size:13px;margin-top:30px}
+.ac-form{display:flex;align-items:flex-end;gap:6px;padding:7px 8px;background:var(--wa-hd)}.ac-form textarea{flex:1;resize:none;max-height:120px;min-height:40px;padding:9px 13px;border-radius:22px;border:0;outline:0;background:var(--wa-th);color:var(--wa-tx);font:inherit;font-size:15px;line-height:1.3}
+.ac-form button{width:42px;height:42px;border-radius:50%;border:0;cursor:pointer;font-size:18px;background:transparent;color:var(--wa-tx)}.ac-form .ac-send{background:#00a884;color:#fff}
+.ac-emo{display:none;grid-template-columns:repeat(8,1fr);gap:2px;padding:6px 8px;background:var(--wa-hd)}.ac-emo.on{display:grid}.ac-emo button{border:0;background:none;font-size:22px;padding:5px;cursor:pointer}
+.ac-fab{position:absolute;right:12px;bottom:68px;min-width:38px;height:38px;border-radius:19px;border:0;background:var(--wa-th);color:var(--wa-tx);box-shadow:0 2px 8px #0003;cursor:pointer;display:none;font-weight:700}.ac-fab.on{display:block}
+.ac-fh{position:absolute;bottom:64px;font-size:22px;pointer-events:none;z-index:3;animation:acRise 2.6s ease-out forwards}@keyframes acRise{0%{opacity:0;transform:translateY(0) rotateY(0) scale(.6)}15%{opacity:1}100%{opacity:0;transform:translateY(-230px) rotateY(540deg) scale(1.3)}}
+
+</style>
+<script type="module">
+/* Aura Together chat: WhatsApp-style bubbles, unlimited history, ticks, typing, presence, notifications. */
+const cfg={
+  apiKey: "AIzaSyAVHAXx7ZDWHQ0et7xKG-bRLp89K3EGac8",
+  authDomain: "aura-sound-2gether.firebaseapp.com",
+  databaseURL: "https://aura-sound-2gether-default-rtdb.firebaseio.com/",
+  projectId: "aura-sound-2gether",
+  storageBucket: "aura-sound-2gether.firebasestorage.app",
+  messagingSenderId: "502284763406",
+  appId: "1:502284763406:web:f804798198d2cec63d575f"
+};
+const $=s=>document.querySelector(s),LS=localStorage,audio=$('#audio');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mk=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e};
+const FBV='https://www.gstatic.com/firebasejs/10.14.1/';
+const fb=Promise.all([import(FBV+'firebase-app.js'),import(FBV+'firebase-auth.js'),import(FBV+'firebase-database.js')]).then(([A,B,C])=>({...A,...B,...C})).catch(()=>null);
+let F=null,db=null,auth=null;
+async function ctx(){F=await fb;if(!F)return null;if(!db){const app=F.initializeApp(cfg);auth=F.getAuth(app);db=F.getDatabase(app)}if(!auth.currentUser)await F.signInAnonymously(auth);return{uid:auth.currentUser.uid}}
+const myName=()=>LS.getItem('as_demo_key_user_v1')||'Listener';
+let off=0;const now=()=>Date.now()+off;
+function sys(t,b){if(document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification(t,{body:b,tag:'aura-together',icon:$('#playerArt')?.src})}catch{}}}
+function pop(t,b){let h=$('#ltPops');if(!h){h=mk('div');h.id='ltPops';document.body.append(h)}const d=mk('button','lt-pop');d.innerHTML=`<b>${esc(t)}</b><span>${esc(b)}</span>`;d.onclick=()=>{d.remove();window.openAuraTogether?.()};h.append(d);try{navigator.vibrate?.([80,40,80])}catch{}setTimeout(()=>d.remove(),5200);while(h.children.length>3)h.firstChild.remove();sys(t,b)}
+/* ---------- Background: presence, delivery, notifications (works even when chat is closed) ---------- */
+let bgRoom='',bgUn=[],bgHb=0,lastJoin=0;const t0=Date.now();
+async function bgCheck(){const room=LS.getItem('aura_together_room')||'';if(room===bgRoom)return;bgUn.forEach(f=>f());bgUn=[];clearInterval(bgHb);bgRoom=room;if(!room)return;
+let c;try{c=await ctx()}catch{return}if(!c||bgRoom!==room)return;const{uid}=c,P='rooms/'+room,{ref,set,push,onValue,onChildAdded,query,limitToLast,serverTimestamp}=F;let pid='',paired=false,lastT='';
+bgUn.push(onValue(ref(db,'.info/serverTimeOffset'),s=>{off=s.val()||0}));
+const beat=()=>{if(!document.hidden)set(ref(db,P+'/presence/'+uid),serverTimestamp()).catch(()=>{})};beat();bgHb=setInterval(beat,20000);
+const join=()=>{if(!paired||Date.now()-lastJoin<180000)return;lastJoin=Date.now();push(ref(db,P+'/events'),{t:'join',from:uid,name:myName(),at:serverTimestamp()}).catch(()=>{})};
+const vis=()=>{if(!document.hidden){beat();join()}};document.addEventListener('visibilitychange',vis);bgUn.push(()=>document.removeEventListener('visibilitychange',vis));
+bgUn.push(onValue(ref(db,P),s=>{const r=s.val();if(!r)return;pid=r.owner===uid?r.partner:r.owner;const p=!!r.partner&&r.partner!==r.owner;if(p&&!paired){paired=true;join()}paired=p}));
+bgUn.push(onChildAdded(query(ref(db,P+'/events'),limitToLast(1)),s=>{const e=s.val();if(!e||e.from===uid||(e.at||Date.now())<t0-8000)return;pop('💞 '+(e.name||'Your partner')+' is here','They just opened Aura Sounds. Say hi 👋')}));
+bgUn.push(onValue(ref(db,P+'/music'),s=>{const m=s.val();if(!m||m.by===uid||!m.title||m.title===lastT||(m.stamp||0)<t0-8000)return;lastT=m.title;pop('🎵 Your partner is playing',m.title+(m.artist?' — '+m.artist:''))}));
+bgUn.push(onChildAdded(query(ref(db,P+'/messages'),limitToLast(1)),s=>{const m=s.val();if(!m||m.from===uid||(m.at||Date.now())<t0-8000)return;set(ref(db,P+'/dlv/'+uid),serverTimestamp()).catch(()=>{});sys('💬 '+(m.name||'Partner'),String(m.text).slice(0,140))}))}
+setInterval(bgCheck,3000);bgCheck();
+/* ---------- Chat UI ---------- */
+const EMO='😊😂🥰😍😘🥺😭😎🔥💗💞💕❤️😅🤗😴🎧🎵🎶👍🙏🎉✨🌙'.match(/\p{Extended_Pictographic}(?:\uFE0F)?/gu);
+const dayKey=t=>new Date(t).toDateString(),hm=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const dayLbl=t=>{const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return'Today';n.setDate(n.getDate()-1);return d.toDateString()===n.toDateString()?'Yesterday':d.toLocaleDateString([],{day:'numeric',month:'long',year:'numeric'})};
+const link=t=>esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+let cur=null;
+window.AuraChat={open(code,uid){cur?.();let dead=false,un=[],timers=[];const stop=()=>{dead=true;un.forEach(f=>f());timers.forEach(clearInterval);cur=null};cur=stop;init(code,uid,()=>dead,un,timers);return stop}};
+async function init(code,uid,isDead,un,timers){const chat=$('#togetherChat');if(!chat)return;let c;try{c=await ctx()}catch{chat.innerHTML='<div class="ac-empty">Could not connect. Check Firebase setup.</div>';return}if(!c||isDead())return;
+const{ref,get,set,push,onValue,onChildAdded,query,orderByKey,limitToLast,endBefore,startAfter,serverTimestamp}=F,P='rooms/'+code,PAGE=120;
+let w=chat.closest('.ac-wrap');if(w){w.querySelector('.ac-head')?.remove();w.querySelector('.ac-form')?.remove();w.querySelector('.ac-emo')?.remove();w.querySelector('.ac-fab')?.remove()}else{w=mk('div','ac-wrap');chat.before(w);w.append(chat)}
+chat.classList.add('ac-chat');chat.innerHTML='';const old=$('#togetherSendForm');if(old)old.style.display='none';
+const head=mk('div','ac-head');head.innerHTML='<div class="ac-couple"><div class="ac-av me" id="acMe"></div><div class="ac-ht">💞</div><div class="ac-av th" id="acTh">?</div></div><div class="ac-who"><b id="acName">Your partner</b><small id="acSt">connecting…</small></div><button type="button" class="ac-bell" id="acBell" aria-label="Enable notifications" title="Enable notifications">🔔</button>';w.prepend(head);
+const form=mk('form','ac-form');form.innerHTML='<button type="button" id="acEmoB" aria-label="Emoji">😊</button><textarea id="acIn" rows="1" placeholder="Message" enterkeyhint="send" aria-label="Message"></textarea><button class="ac-send" aria-label="Send">➤</button>';
+const emo=mk('div','ac-emo');emo.innerHTML=EMO.map(e=>`<button type="button">${e}</button>`).join('');const fab=mk('button','ac-fab');fab.type='button';fab.setAttribute('aria-label','Scroll to latest');w.append(fab,emo,form);
+const inp=$('#acIn');$('#acMe').textContent=(myName()[0]||'Y').toUpperCase();
+const bell=$('#acBell');const bellUpd=()=>bell.style.display=('Notification' in window&&Notification.permission==='default')?'':'none';bellUpd();bell.onclick=async()=>{try{await Notification.requestPermission()}catch{}bellUpd()};
+let arr=[],keys=new Set(),hasMore=false,pid='',partnerName='',R={},D={},PR={},TY={},unread=0,loading=false;
+const near=()=>chat.scrollHeight-chat.scrollTop-chat.clientHeight<90,toEnd=()=>{const g=()=>{chat.scrollTop=chat.scrollHeight};g();requestAnimationFrame(()=>{g();requestAnimationFrame(g)})};
+function row(m,prev){let h='';const t=m.at||now();if(!prev||dayKey(prev.at||now())!==dayKey(t))h+=`<div class="ac-day"><span>${dayLbl(t)}</span></div>`;const mine=m.from===uid,first=!prev||prev.from!==m.from||h!=='';return h+`<div class="ac-row ${mine?'mine':'their'}${first?' first':''}" data-at="${m.at||0}"><div class="ac-b">${link(m.text)}<span class="ac-m">${hm(t)}${mine?'<i class="tk">🕓</i>':''}</span></div></div>`}
+function full(){let h=hasMore?'<div class="ac-more" id="acMore">Scroll up for earlier messages</div>':'';arr.forEach((m,i)=>h+=row(m,arr[i-1]));chat.innerHTML=h||'<div class="ac-empty">No messages yet. Say hi 💗</div>';ticks(true)}
+function ticks(all){const p=pid;chat.querySelectorAll('.ac-row.mine'+(all?'':':not([data-s="r"])')).forEach(r=>{const at=+r.dataset.at,i=r.querySelector('.tk');let s='p',t='🕓';if(at){if(at<=(R[p]||0)){s='r';t='✓✓'}else if(at<=(D[p]||0)){s='d';t='✓✓'}else{s='s';t='✓'}}if(r.dataset.s!==s){r.dataset.s=s;i.textContent=t;i.classList.toggle('r',s==='r')}})}
+function markRead(){if(!document.hidden&&near()&&arr.length&&arr[arr.length-1].from!==uid){const t=Date.now();if(markRead.t&&t-markRead.t<1500)return;markRead.t=t;set(ref(db,P+'/reads/'+uid),serverTimestamp()).catch(()=>{})}}
+function hearts(n){if(document.documentElement.classList.contains('lite'))return;for(let i=0;i<n;i++){const h=mk('span','ac-fh');h.textContent=['💗','💞','💕','❤️'][i%4];h.style.left=(8+Math.random()*80)+'%';h.style.animationDelay=(i*.12)+'s';h.addEventListener('animationend',()=>h.remove());w.append(h)}}
+const HR=/[❤💗💞💕😍🥰💘😘]/;
+function addLive(m){if(keys.has(m.k))return;keys.add(m.k);const prev=arr[arr.length-1];arr.push(m);const mine=m.from===uid,stick=near()||mine;if(chat.querySelector('.ac-empty'))chat.innerHTML='';chat.insertAdjacentHTML('beforeend',row(m,prev));ticks(false);
+if(!mine){set(ref(db,P+'/dlv/'+uid),serverTimestamp()).catch(()=>{});if(HR.test(m.text))hearts(6)}if(stick){toEnd();fab.classList.remove('on');unread=0;markRead()}else{unread++;fab.textContent='↓ '+unread;fab.classList.add('on')}}
+async function older(){if(loading||!hasMore||!arr.length)return;loading=true;try{const s=await get(query(ref(db,P+'/messages'),orderByKey(),endBefore(arr[0].k),limitToLast(PAGE))),l=[];s.forEach(x=>{l.push({k:x.key,...x.val()})});hasMore=l.length>=PAGE;l.forEach(m=>keys.add(m.k));const h0=chat.scrollHeight;arr=l.concat(arr);full();chat.scrollTop=chat.scrollHeight-h0}catch{}loading=false}
+chat.addEventListener('scroll',()=>{if(chat.scrollTop<50)older();if(near()){fab.classList.remove('on');unread=0;markRead()}},{passive:true});fab.onclick=()=>{toEnd();fab.classList.remove('on');unread=0;markRead()};
+/* send */
+function send(){const text=inp.value.replace(/\s+$/,'');if(!text.trim())return;inp.value='';inp.style.height='';emo.classList.remove('on');const r=push(ref(db,P+'/messages'));set(r,{from:uid,name:myName(),text,at:serverTimestamp()}).catch(()=>pop('Message not sent','Check your connection and try again.'));if(HR.test(text))hearts(8);if('Notification' in window&&Notification.permission==='default'&&!LS.getItem('ac_asked')){LS.setItem('ac_asked','1');Notification.requestPermission().then(bellUpd).catch(()=>{})}}
+form.onsubmit=e=>{e.preventDefault();send();inp.focus()};
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();send()}});
+inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,120)+'px';const t=Date.now();if(!input_t||t-input_t>2500){input_t=t;set(ref(db,P+'/typing/'+uid),serverTimestamp()).catch(()=>{})}});let input_t=0;
+$('#acEmoB').onclick=()=>emo.classList.toggle('on');emo.onclick=e=>{const b=e.target.closest('button');if(!b)return;const s=inp.selectionStart??inp.value.length;inp.value=inp.value.slice(0,s)+b.textContent+inp.value.slice(inp.selectionEnd??s);inp.focus();inp.dispatchEvent(new Event('input'))};
+/* status */
+function status(){const p=pid,tn=now(),on=tn-(PR[p]||0)<45000,ty=tn-(TY[p]||0)<4500;$('#acTh').classList.toggle('on',on);$('#acName').textContent=partnerName||'Your partner';$('#acTh').textContent=(partnerName[0]||'?').toUpperCase();$('#acMe').classList.toggle('on',true);
+let s=!p?'waiting for your partner to join…':ty?'typing…':on?(!audio.paused?'💞 online · listening together':'online'):PR[p]?'last seen '+hm(PR[p]):'offline';$('#acSt').textContent=s}
+timersPush(setInterval(()=>{status();ticks(false)},1500));function timersPush(t){timers.push(t)}
+/* listeners */
+un.push(onValue(ref(db,'.info/serverTimeOffset'),s=>{off=s.val()||0}));
+un.push(onValue(ref(db,P),s=>{const r=s.val();if(r){pid=r.owner===uid?r.partner||'':r.owner||'';status();ticks(true)}}));
+if(!pid)void 0;
+un.push(onValue(ref(db,P+'/members'),s=>{const m=s.val()||{};const e=Object.entries(m).find(([k])=>k!==uid);if(e){partnerName=e[1];status()}}));
+un.push(onValue(ref(db,P+'/reads'),s=>{R=s.val()||{};ticks(false)}));un.push(onValue(ref(db,P+'/dlv'),s=>{D=s.val()||{};ticks(false)}));
+un.push(onValue(ref(db,P+'/presence'),s=>{PR=s.val()||{};status()}));un.push(onValue(ref(db,P+'/typing'),s=>{TY=s.val()||{};status()}));
+/* initial page then live messages only (no limit on history: older pages load on scroll) */
+const MR=ref(db,P+'/messages');let last='';
+try{const s=await get(query(MR,orderByKey(),limitToLast(PAGE)));if(isDead())return;const l=[];s.forEach(x=>{l.push({k:x.key,...x.val()})});hasMore=l.length>=PAGE;arr=l;l.forEach(m=>keys.add(m.k));last=l.length?l[l.length-1].k:'';
+for(const m of l)if(m.from!==uid&&!partnerName&&m.name)partnerName=m.name}catch{chat.innerHTML='<div class="ac-empty">Could not load messages.</div>'}
+full();toEnd();status();markRead();
+un.push(onChildAdded(last?query(MR,orderByKey(),startAfter(last)):MR,s=>{if(isDead())return;addLive({k:s.key,...s.val()})}));
+document.addEventListener('visibilitychange',markRead);un.push(()=>document.removeEventListener('visibilitychange',markRead))}
 
 </script>
 </body>
