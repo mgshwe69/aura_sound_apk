@@ -1450,7 +1450,7 @@ setInterval(()=>{const b=$('#smBadge');if(!b)return;const n=+LS.getItem('ac_unre
 /* official full song: YouTube IFrame player (visible, as YouTube's terms require) */
 let ytApi=null;const loadYT=()=>ytApi||(ytApi=new Promise(res=>{if(window.YT?.Player)return res();window.onYouTubeIframeAPIReady=res;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.append(s)}));
 async function playFull(np){const title=$('#playerTitle')?.textContent.trim(),artist=$('#playerArtist')?.textContent.trim();if(!title)return;
-let key=LS.getItem('lt_yt_key')||'';if(!key){key=(prompt('Paste your YouTube Data API v3 key (free from Google Cloud Console). Saved on this device only:')||'').trim();if(!key)return;LS.setItem('lt_yt_key',key)}
+let key='AIzaSyA6acesq4-BQVgHZo13vrGi6lQJ7w4Wxxk';
 say('Finding the full song…');try{const q=encodeURIComponent((title+' '+artist.split(/,|&|feat\.?/i)[0]+' official audio').trim()),r=await(await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&videoCategoryId=10&maxResults=1&q=${q}&key=${encodeURIComponent(key)}`)).json();
 if(r.error){if(/key|API_KEY/i.test(r.error.message||''))LS.removeItem('lt_yt_key');return say('YouTube: '+(r.error.message||'request failed'))}const id=r.items?.[0]?.id?.videoId;if(!id)return say('No full version found for this song.');
 audio.pause();$('#ytBox')?.remove();const box=mk('div','yt-box');box.id='ytBox';box.innerHTML='<button class="yt-x" aria-label="Close player">×</button><div id="ytp"></div>';np.append(box);
